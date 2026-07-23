@@ -3,6 +3,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import logoRaca from '@/assets/logo-raca.png'
+  import { useAuthStore } from '@/stores/auth'
   import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
 
@@ -13,6 +14,7 @@
   const theme = useTheme()
   const dashboard = useDashboardStore()
   const commercial = useCommercialStore()
+  const auth = useAuthStore()
 
   onMounted(() => {
     if (!dashboard.data) dashboard.load()
@@ -44,6 +46,13 @@
 
   function toggleTheme () {
     theme.global.name.value = isDark.value ? 'racaLight' : 'racaDark'
+  }
+
+  const authEnabled = import.meta.env.VITE_USE_MOCK === 'false'
+
+  async function logout () {
+    await auth.logout()
+    await router.replace({ name: 'login' })
   }
 </script>
 
@@ -157,6 +166,33 @@
           <v-icon>mdi-bell-outline</v-icon>
         </v-badge>
       </v-btn>
+
+      <v-menu v-if="authEnabled" location="bottom end">
+        <template #activator="{ props }">
+          <v-btn
+            class="ms-1"
+            v-bind="props"
+            variant="text"
+          >
+            <v-icon class="me-1" icon="mdi-account-circle" />
+            <span class="d-none d-sm-inline text-body-2">{{ auth.displayName || 'Conta' }}</span>
+            <v-icon icon="mdi-chevron-down" size="18" />
+          </v-btn>
+        </template>
+        <v-list density="compact" min-width="200">
+          <v-list-item
+            v-if="auth.user?.email"
+            :subtitle="auth.user.email"
+            title="Usuário"
+          />
+          <v-divider class="my-1" />
+          <v-list-item
+            prepend-icon="mdi-logout"
+            title="Sair"
+            @click="logout"
+          />
+        </v-list>
+      </v-menu>
     </v-app-bar>
 
     <v-main class="app-main app-shell-bg">

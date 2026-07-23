@@ -28,7 +28,8 @@ Default admin: `admin@example.com` / `admin123` (change in `.env`).
 Frontend base path: **`/raca-comercial/`** (see `vite.config.mts`).  
 Dev URL: http://localhost:3000/raca-comercial/
 
-Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.
+Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.  
+With Directus mode, the app requires **login** at `/raca-comercial/login` using a Directus user.
 
 ## Local frontend + Docker backend
 
