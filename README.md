@@ -1,89 +1,86 @@
 # raca_analista_comercial
 
-Scaffolded with Vuetify CLI.
+Analista comercial Raça — Vue 3 frontend + Directus backend.
 
-## ❗️ Documentation
+## Stack
 
-- Primary docs: https://vuetifyjs.com/
-- Getting started guide: https://vuetifyjs.com/en/getting-started/installation/
-- Community support: https://community.vuetifyjs.com/
-- Issue tracker: https://issues.vuetifyjs.com/
-
-## 🧱 Stack
-
-- Framework: Vue 3 + Vite
-- UI Library: Vuetify
-- Language: TypeScript
+- Frontend: Vue 3 + Vite + Vuetify + TypeScript
+- Backend: Directus 11 (PostgreSQL + Redis)
 - Package manager: npm
 
-## 🧭 Start Here
+## Quick start (Docker)
 
-- Main entry: `src/main.ts`
-- Main app component: `src/App.vue`
-- Main styles: `src/styles/`
-- Plugin setup: `src/plugins/`
-
-## 📁 Project Structure
-
-- `src/main.ts` — application entry point
-- `src/App.vue` — root component
-- `src/components/` — reusable Vue components
-- `src/plugins/` — plugin registration and setup
-- `src/styles/` — global styles and theme settings
-- `public/` — static public files
-
-## ✨ Enabled Features
-
-- ESLint
-- Vuetify MCP
-
-## 💿 Install
-
-Use your selected package manager (npm) to install dependencies:
+Runs frontend, Directus, Postgres, and Redis together:
 
 ```bash
-npm install
+cp .env.example .env   # if needed
+npm run docker:up
+npm run directus:bootstrap
 ```
 
-## 🚀 Quick Start
+| Service   | URL                      |
+|-----------|--------------------------|
+| Frontend  | http://localhost:3000    |
+| Directus  | http://localhost:8055    |
+
+Default admin: `admin@example.com` / `admin123` (change in `.env`).
+
+Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.
+
+## Local frontend + Docker backend
 
 ```bash
 npm install
+npm run docker:backend
+npm run directus:bootstrap
 npm run dev
 ```
 
-## 🏗️ Build
+## Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Vite dev server |
+| `npm run build` | Production build |
+| `npm run docker:up` | Start full stack |
+| `npm run docker:backend` | Start Directus + DB + Redis only |
+| `npm run docker:down` | Stop stack |
+| `npm run docker:logs` | Follow compose logs |
+| `npm run directus:bootstrap` | Create Directus collections |
+| `npm run directus:snapshot` | Export schema snapshot |
+
+## Directus collections
+
+Bootstrap creates collections used by `src/api/directus.ts`:
+
+- `vendedores`, `clientes`, `historico_faturamento`, `movimentacoes`
+- `insights`, `recomendacoes`, `alertas`
+- `dashboard_kpis` (singleton), `ai_modules`, `ctes`
+
+## Production deploy (API)
+
+Target: `https://api-raca-comercial.soultech.solutions`
+
+On the server:
 
 ```bash
-npm run build
+cp .env.production.example .env   # set secrets
+./scripts/deploy.sh --bootstrap
+# or: npm run deploy:bootstrap
 ```
 
-## 🧪 Available Scripts
+Options:
 
-- `npm run dev`
-- `npm run build`
-- `npm run preview`
-- `npm run build-only`
-- `npm run type-check`
-- `npm run lint`
-- `npm run lint:fix`
+- `./scripts/deploy.sh` — pull images + restart API stack
+- `./scripts/deploy.sh --pull` — `git pull --ff-only` then deploy
+- `./scripts/deploy.sh --bootstrap` — also run collection bootstrap
 
-## 🤖 Vuetify MCP Server
+Point your reverse proxy (TLS) at `127.0.0.1:8055`.
 
-This project is configured with the Vuetify Model Context Protocol (MCP) server.
-To install and configure the MCP server for your favorite IDE (Cursor, Trae, Windsurf, VS Code, Claude Desktop, etc.) run:
+## Project structure
 
-```bash
-npx -y @vuetify/mcp-cli
-```
-
-This will open an interactive setup wizard to help you connect your AI assistant to the Vuetify ecosystem.
-
-## 💪 Support Vuetify Development
-
-This project uses Vuetify - an MIT licensed Open Source project. We are glad to welcome contributors and any support for ongoing development:
-
-- Contribute to Vuetify and ecosystem projects: https://github.com/vuetifyjs
-- Request enterprise support: https://support.vuetifyjs.com/
-- Sponsor on GitHub: https://github.com/sponsors/vuetifyjs
-- Support on Open Collective: https://opencollective.com/vuetify
+- `src/main.ts` — app entry
+- `src/api/directus.ts` — Directus API client (mock toggle via `VITE_USE_MOCK`)
+- `docker-compose.yml` — full local stack
+- `scripts/bootstrap-directus.mjs` — schema bootstrap
+- `directus/` — uploads, extensions, snapshots volumes

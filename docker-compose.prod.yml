@@ -1,0 +1,14 @@
+services:
+  # Production API only — frontend is deployed separately.
+  frontend:
+    profiles:
+      - frontend
+
+  directus:
+    ports:
+      - '${DIRECTUS_PORT:-8055}:8055'
+    environment:
+      PUBLIC_URL: ${PUBLIC_URL:-https://api-raca-comercial.soultech.solutions}
+      CORS_ORIGIN: ${CORS_ORIGIN:-true}
+      # Trust reverse-proxy headers (nginx / Caddy / Traefik)
+      PRESSURE_LIMITER_ENABLED: 'false'

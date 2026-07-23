@@ -25,3 +25,17 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+# Env (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Directus runtime data
+directus/uploads/*
+!directus/uploads/.gitkeep
+directus/extensions/*
+!directus/extensions/.gitkeep
+directus/snapshots/*.yaml
+directus/snapshots/*.yml
+!directus/snapshots/.gitkeep
