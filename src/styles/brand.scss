@@ -1,0 +1,47 @@
+/**
+ * Tipografia e tokens de marca — Raça Transportes
+ */
+
+:root {
+  --raca-red: #eb1823;
+  --raca-red-dark: #c4121c;
+  --raca-black: #000000;
+  --raca-black-soft: #111111;
+  --raca-orange: #ff4800;
+  --raca-bg: #f3f5f8;
+  --raca-font: 'Outfit', system-ui, sans-serif;
+  --raca-display: 'Barlow Condensed', 'Outfit', sans-serif;
+}
+
+html {
+  font-family: var(--raca-font);
+}
+
+.v-application {
+  font-family: var(--raca-font) !important;
+}
+
+.brand-title,
+.text-h4,
+.text-h5,
+.text-h6,
+.v-toolbar-title {
+  font-family: var(--raca-display) !important;
+  letter-spacing: 0.02em;
+}
+
+.brand-wordmark {
+  font-family: var(--raca-display);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+}
+
+.app-shell-bg {
+  background:
+    radial-gradient(ellipse 80% 50% at 100% -10%, rgba(235, 24, 35, 0.06), transparent 50%),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(0, 0, 0, 0.04), transparent 45%),
+    rgb(var(--v-theme-background));
+}

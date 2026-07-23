@@ -1,0 +1,239 @@
+<script lang="ts" setup>
+  import { computed, onMounted, ref } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'
+  import { useTheme } from 'vuetify'
+  import logoRaca from '@/assets/logo-raca.png'
+  import { useDashboardStore } from '@/stores/dashboard'
+
+  const drawer = ref(true)
+  const rail = ref(false)
+  const route = useRoute()
+  const router = useRouter()
+  const theme = useTheme()
+  const dashboard = useDashboardStore()
+
+  onMounted(() => {
+    if (!dashboard.data) dashboard.load()
+  })
+
+  const navItems = [
+    { title: 'Dashboard', to: '/', icon: 'mdi-view-dashboard', exact: true },
+    { title: 'Base de Dados', to: '/base-dados', icon: 'mdi-database' },
+    { title: 'Motor de IA', to: '/motor-ia', icon: 'mdi-brain' },
+    { title: 'Clientes', to: '/clientes', icon: 'mdi-account-group' },
+    { title: 'Recomendações', to: '/recomendacoes', icon: 'mdi-lightbulb-on' },
+    { title: 'Alertas', to: '/alertas', icon: 'mdi-bell-alert' },
+  ]
+
+  const pageTitle = computed(() => (route.meta.title as string) || 'Raça analise comercial')
+  const isDark = computed(() => theme.global.current.value.dark)
+  const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
+
+  function isActive (item: (typeof navItems)[0]) {
+    if (item.exact) return route.path === item.to
+    return route.path.startsWith(item.to)
+  }
+
+  function toggleTheme () {
+    theme.global.name.value = isDark.value ? 'racaLight' : 'racaDark'
+  }
+</script>
+
+<template>
+  <v-layout class="app-layout">
+    <v-navigation-drawer
+      v-model="drawer"
+      class="app-nav"
+      :rail="rail"
+      width="268"
+    >
+      <div class="brand-header pa-4">
+        <div class="d-flex align-center ga-3">
+          <div class="brand-logo-wrap" :class="{ 'brand-logo-wrap--rail': rail }">
+            <img
+              :src="logoRaca"
+              alt="Raça Transportes"
+              class="brand-logo"
+            >
+          </div>
+
+          <div v-if="!rail" class="overflow-hidden">
+            <div class="brand-wordmark text-white">
+              Raça
+            </div>
+            <div class="text-caption brand-subtitle">
+              analise comercial
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <v-divider class="border-opacity-25" />
+
+      <v-list class="px-2 py-3" density="comfortable" nav>
+        <v-list-item
+          v-for="item in navItems"
+          :key="item.to"
+          :active="isActive(item)"
+          class="mb-1 nav-item"
+          :class="{ 'nav-item--active': isActive(item) }"
+          :prepend-icon="item.icon"
+          rounded="lg"
+          :title="item.title"
+          :to="item.to"
+        >
+          <template v-if="item.to === '/alertas' && dashboard.alertasNaoLidos" #append>
+            <v-badge
+              color="primary"
+              :content="dashboard.alertasNaoLidos"
+              inline
+            />
+          </template>
+        </v-list-item>
+      </v-list>
+
+      <template #append>
+        <div class="pa-3">
+          <v-btn
+            block
+            color="white"
+            :prepend-icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
+            variant="text"
+            @click="rail = !rail"
+          >
+            <span v-if="!rail">Recolher</span>
+          </v-btn>
+        </div>
+      </template>
+    </v-navigation-drawer>
+
+    <v-app-bar border class="app-bar" color="surface" flat height="64">
+      <v-app-bar-nav-icon
+        class="d-lg-none"
+        @click="drawer = !drawer"
+      />
+
+      <v-toolbar-title class="brand-title font-weight-bold">
+        {{ pageTitle }}
+      </v-toolbar-title>
+
+      <v-spacer />
+
+      <v-chip
+        v-if="useMock"
+        class="me-3"
+        color="warning"
+        size="small"
+        variant="tonal"
+      >
+        Dados mock
+      </v-chip>
+
+      <v-btn
+        icon
+        variant="text"
+        @click="toggleTheme"
+      >
+        <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
+      </v-btn>
+
+      <v-btn
+        icon
+        variant="text"
+        @click="router.push('/alertas')"
+      >
+        <v-badge
+          color="primary"
+          :content="dashboard.alertasNaoLidos || undefined"
+          :model-value="!!dashboard.alertasNaoLidos"
+        >
+          <v-icon>mdi-bell-outline</v-icon>
+        </v-badge>
+      </v-btn>
+    </v-app-bar>
+
+    <v-main class="app-main app-shell-bg">
+      <v-container class="pa-4 pa-md-6" fluid>
+        <router-view />
+      </v-container>
+    </v-main>
+  </v-layout>
+</template>
+
+<style scoped>
+.app-main {
+  min-height: 100vh;
+}
+
+.app-nav {
+  border-right: none !important;
+  background: #000 !important;
+  color: #fff !important;
+}
+
+.app-nav :deep(.v-list),
+.app-nav :deep(.v-list-item-title),
+.app-nav :deep(.v-icon),
+.app-nav :deep(.v-btn) {
+  color: rgba(255, 255, 255, 0.88) !important;
+}
+
+.app-nav :deep(.v-divider) {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.brand-header {
+  background: linear-gradient(180deg, rgba(235, 24, 35, 0.22), transparent);
+}
+
+.brand-logo-wrap {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #000;
+  padding: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(235, 24, 35, 0.35);
+}
+
+.brand-logo-wrap--rail {
+  width: 40px;
+  height: 40px;
+}
+
+.brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+
+.nav-item {
+  opacity: 0.9;
+}
+
+.nav-item--active,
+.app-nav :deep(.nav-item--active) {
+  background: rgba(235, 24, 35, 0.22) !important;
+}
+
+.nav-item--active :deep(.v-list-item-title),
+.nav-item--active :deep(.v-icon),
+.app-nav :deep(.nav-item--active .v-list-item-title),
+.app-nav :deep(.nav-item--active .v-icon) {
+  color: #eb1823 !important;
+  font-weight: 600;
+}
+
+.app-bar {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+</style>
