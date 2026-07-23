@@ -7,7 +7,7 @@ import { fetchAndParseCteUrl, parseCteFile } from '@/services/cteParser'
 import { isDirectusSyncEnabled, syncImportToDirectus } from '@/services/directusSync'
 
 const STORAGE_KEY = 'raca_comercial_analytics_v1'
-const SEED_URL = '/data/base-fat-raca.xlsx'
+const SEED_URL = `${import.meta.env.BASE_URL}data/base-fat-raca.xlsx`
 
 interface PersistedPayload {
   stats: ImportStats

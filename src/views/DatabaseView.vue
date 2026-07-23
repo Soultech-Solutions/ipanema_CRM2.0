@@ -94,7 +94,7 @@
   async function reloadSeed () {
     successMsg.value = ''
     commercial.clearCache()
-    await commercial.importFromUrl('/data/base-fat-raca.xlsx', 'base-fat-raca.xlsx')
+    await commercial.importFromUrl(`${import.meta.env.BASE_URL}data/base-fat-raca.xlsx`, 'base-fat-raca.xlsx')
     await dashboard.load()
     successMsg.value = commercial.syncToDirectus
       ? 'Base seed recarregada e sincronizada com Directus.'
