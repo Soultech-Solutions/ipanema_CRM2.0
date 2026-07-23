@@ -33,6 +33,8 @@ export interface AnalyticsResult {
   stats: ImportStats
   clients: Client[]
   dashboard: DashboardData
+  /** Detalhes pré-calculados — evita reprocessar 65k CT-es na UI */
+  clientDetails: Record<string, ClientDetail>
 }
 
 interface ClientAgg {
@@ -168,10 +170,28 @@ function computeChurnProb (params: {
   return clamp(p, 0.03, 0.92)
 }
 
-function buildAggs (ctes: CteDocument[]): Map<string, ClientAgg> {
+function buildAggs (ctes: CteDocument[]): {
+  map: Map<string, ClientAgg>
+  totalValor: number
+  ctesAbertos: number
+  devolucoes: number
+  reentregas: number
+} {
   const map = new Map<string, ClientAgg>()
+  let totalValor = 0
+  let ctesAbertos = 0
+  let devolucoes = 0
+  let reentregas = 0
 
   for (const cte of ctes) {
+    totalValor += cte.valor
+    const devolucao = isDevolucao(cte.tipoCte)
+    const reentrega = isReentrega(cte.tipoCte)
+    const aberto = isCteAberto(cte)
+    if (devolucao) devolucoes += 1
+    if (reentrega) reentregas += 1
+    if (aberto) ctesAbertos += 1
+
     const id = clientIdFromCodigo(cte.clienteCodigo)
     let agg = map.get(id)
     if (!agg) {
@@ -201,18 +221,16 @@ function buildAggs (ctes: CteDocument[]): Map<string, ClientAgg> {
     agg.count += 1
     agg.valorTotal += cte.valor
     if (cte.grupoCliente) agg.grupoCliente = cte.grupoCliente
-    agg.classificacoes.set(
-      cte.classificacao || 'SEM CLASSIFICAÇÃO',
-      (agg.classificacoes.get(cte.classificacao || 'SEM CLASSIFICAÇÃO') || 0) + 1,
-    )
-    if (isDevolucao(cte.tipoCte)) agg.devolucoes += 1
-    if (isReentrega(cte.tipoCte)) agg.reentregas += 1
-    if (isCteAberto(cte)) agg.ctesAbertos += 1
+    const classif = cte.classificacao || 'SEM CLASSIFICAÇÃO'
+    agg.classificacoes.set(classif, (agg.classificacoes.get(classif) || 0) + 1)
+    if (devolucao) agg.devolucoes += 1
+    if (reentrega) agg.reentregas += 1
+    if (aberto) agg.ctesAbertos += 1
     if (cte.destinatario) agg.destinatarios.add(cte.destinatario)
 
     const rota = `${cte.ufOrigem} → ${cte.ufDestino}`
     agg.rotas.set(rota, (agg.rotas.get(rota) || 0) + 1)
-    agg.produtos.set(cte.classificacao || 'SEM CLASSIFICAÇÃO', (agg.produtos.get(cte.classificacao || 'SEM CLASSIFICAÇÃO') || 0) + 1)
+    agg.produtos.set(classif, (agg.produtos.get(classif) || 0) + 1)
 
     const y = calcYieldRsTon(cte.valor, cte.pesoKg)
     if (y > 0 && Number.isFinite(y)) {
@@ -220,7 +238,7 @@ function buildAggs (ctes: CteDocument[]): Map<string, ClientAgg> {
       agg.yieldCount += 1
     }
 
-    const ts = new Date(cte.dtCadastro).getTime()
+    const ts = Date.parse(cte.dtCadastro)
     if (!Number.isNaN(ts)) {
       if (ts > agg.lastDate) agg.lastDate = ts
       if (ts < agg.firstDate) agg.firstDate = ts
@@ -228,10 +246,91 @@ function buildAggs (ctes: CteDocument[]): Map<string, ClientAgg> {
       agg.monthly.set(mk, (agg.monthly.get(mk) || 0) + cte.valor)
     }
 
-    if (agg.recent.length < 40) agg.recent.push(cte)
+    // Mantém só os 8 mais recentes para timeline (heap simples por inserção ordenada depois)
+    if (agg.recent.length < 12) {
+      agg.recent.push(cte)
+    } else {
+      // substitui o mais antigo se este for mais novo
+      let oldestIdx = 0
+      let oldestTs = Date.parse(agg.recent[0]?.dtCadastro || '') || 0
+      for (let i = 1; i < agg.recent.length; i++) {
+        const t = Date.parse(agg.recent[i]?.dtCadastro || '') || 0
+        if (t < oldestTs) {
+          oldestTs = t
+          oldestIdx = i
+        }
+      }
+      if (!Number.isNaN(ts) && ts > oldestTs) {
+        agg.recent[oldestIdx] = cte
+      }
+    }
   }
 
-  return map
+  return { map, totalValor, ctesAbertos, devolucoes, reentregas }
+}
+
+function detailFromAgg (client: Client, agg: ClientAgg, dashboard: DashboardData): ClientDetail {
+  const historicoFaturamento: MonthlyMetric[] = [...agg.monthly.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .slice(-7)
+    .map(([key, valor]) => ({ mes: monthLabel(key), valor }))
+
+  const movimentacoes: TimelineEvent[] = [...agg.recent]
+    .sort((a, b) => Date.parse(b.dtCadastro) - Date.parse(a.dtCadastro))
+    .slice(0, 8)
+    .map((cte, i) => ({
+      id: `mov-${client.id}-${i}`,
+      data: cte.dtCadastro.slice(0, 10),
+      titulo: isDevolucao(cte.tipoCte)
+        ? 'Devolução'
+        : isReentrega(cte.tipoCte)
+          ? 'Reentrega'
+          : isCteAberto(cte)
+            ? 'CT-e em aberto'
+            : 'Embarque / CT-e',
+      descricao: `CT-e ${cte.codigo} · ${cte.munOrigem}/${cte.ufOrigem} → ${cte.munDestino}/${cte.ufDestino} · R$ ${cte.valor.toLocaleString('pt-BR', { maximumFractionDigits: 2 })}`,
+      tipo: isDevolucao(cte.tipoCte) || isReentrega(cte.tipoCte) ? 'alerta' as const : 'embarque' as const,
+    }))
+
+  const topRotas = [...agg.rotas.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([r]) => r)
+  const topProdutos = [...agg.produtos.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([p]) => p)
+
+  return {
+    ...client,
+    historicoFaturamento,
+    produtos: topProdutos,
+    rotas: topRotas,
+    destinatarios: agg.destinatarios.size,
+    embarquesMes: client.frequenciaEmbarques,
+    movimentacoes,
+    insights: [
+      {
+        id: `ins-${client.id}-1`,
+        titulo: 'Health Score do cliente',
+        descricao: `Score ${client.healthScore} com ${client.devolucoes} devoluções, ${client.reentregas} reentregas e ${client.diasSemEmbarque} dias desde o último CT-e.`,
+        tipo: 'explicacao',
+        clienteId: client.id,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: `ins-${client.id}-2`,
+        titulo: 'Receita em risco',
+        descricao: `Probabilidade de perda ${(client.probabilidadePerda * 100).toFixed(0)}% sobre faturamento de R$ ${client.receitaAnual.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} → risco de R$ ${client.receitaEmRisco.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.`,
+        tipo: 'risco',
+        clienteId: client.id,
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: `ins-${client.id}-3`,
+        titulo: 'Potencial estimado',
+        descricao: `Potencial de expansão calculado por benchmark interno: R$ ${client.receitaPotencial.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}.`,
+        tipo: 'oportunidade',
+        clienteId: client.id,
+        createdAt: new Date().toISOString(),
+      },
+    ],
+    recomendacoes: dashboard.recomendacoes.filter(r => r.clienteId === client.id),
+  }
 }
 
 function aggToClient (agg: ClientAgg, now: number, peerAvg: number): Client {
@@ -436,15 +535,15 @@ function buildAlerts (clients: Client[], stats: ImportStats): Alert[] {
 export function analyzeCtes (ctes: CteDocument[], sourceName = 'upload'): AnalyticsResult {
   const now = Date.now()
   const importedAt = new Date().toISOString()
-  const aggs = buildAggs(ctes)
+  const { map: aggs, totalValor, ctesAbertos, devolucoes, reentregas } = buildAggs(ctes)
 
   const stats: ImportStats = {
     totalCtes: ctes.length,
     totalClientes: aggs.size,
-    totalValor: ctes.reduce((s, c) => s + c.valor, 0),
-    ctesAbertos: ctes.filter(c => isCteAberto(c)).length,
-    devolucoes: ctes.filter(c => isDevolucao(c.tipoCte)).length,
-    reentregas: ctes.filter(c => isReentrega(c.tipoCte)).length,
+    totalValor,
+    ctesAbertos,
+    devolucoes,
+    reentregas,
     importedAt,
     sourceName,
   }
@@ -463,7 +562,6 @@ export function analyzeCtes (ctes: CteDocument[], sourceName = 'upload'): Analyt
   const recomendacoes = buildRecommendations(clients, importedAt)
   const alertas = buildAlerts(clients, stats)
 
-  // Enrich modules status from real rates
   const devolucaoRate = stats.totalCtes ? stats.devolucoes / stats.totalCtes : 0
   const abertoRate = stats.totalCtes ? stats.ctesAbertos / stats.totalCtes : 0
   const modules = aiModules.map(m => {
@@ -481,17 +579,28 @@ export function analyzeCtes (ctes: CteDocument[], sourceName = 'upload'): Analyt
     return { ...m }
   })
 
+  const dashboard: DashboardData = {
+    kpis,
+    insights,
+    recomendacoes,
+    alertas,
+    clientesRisco: clients.filter(c => c.status === 'risco' || c.status === 'inativo').slice(0, 12),
+    aiModules: modules,
+  }
+
+  const clientDetails: Record<string, ClientDetail> = {}
+  for (const client of clients) {
+    const agg = aggs.get(client.id)
+    if (agg) {
+      clientDetails[client.id] = detailFromAgg(client, agg, dashboard)
+    }
+  }
+
   return {
     stats,
     clients,
-    dashboard: {
-      kpis,
-      insights,
-      recomendacoes,
-      alertas,
-      clientesRisco: clients.filter(c => c.status === 'risco' || c.status === 'inativo').slice(0, 12),
-      aiModules: modules,
-    },
+    dashboard,
+    clientDetails,
   }
 }
 

@@ -33,8 +33,15 @@ async function fromDirectus<T> (collection: string, params?: Record<string, unkn
   return data.data as T[]
 }
 
-/** Clona dados plain (evita falha do structuredClone em Proxy do Vue/Pinia). */
+/** Cópia leve — evita JSON.parse/stringify pesado no caminho crítico. */
 function cloneData<T> (value: T): T {
+  if (typeof structuredClone === 'function') {
+    try {
+      return structuredClone(value)
+    } catch {
+      // Proxy Vue — fallback
+    }
+  }
   return JSON.parse(JSON.stringify(value)) as T
 }
 
@@ -103,7 +110,6 @@ export async function fetchClientById (id: string): Promise<ClientDetail | undef
   }
 
   return withLocalData(async store => {
-    if (!store.ctes.length) await store.hydrateCtesFromSeed()
     const detail = store.getClientDetail(id)
     return detail ? cloneData(detail) : undefined
   })

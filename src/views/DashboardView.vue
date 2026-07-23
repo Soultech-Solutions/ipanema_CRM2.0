@@ -68,7 +68,7 @@
       <!-- KPI Gauges -->
       <v-card class="mb-6" rounded="lg" variant="outlined">
         <v-card-text class="pa-4">
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" lg md="4" sm="6">
               <KpiGauge
                 color="#43A047"
@@ -273,7 +273,7 @@
       </v-row>
 
       <!-- Benefits footer -->
-      <v-row class="mt-4" dense>
+      <v-row class="mt-4" density="compact">
         <v-col
           v-for="benefit in [
             { icon: 'mdi-chart-line', label: 'Mais previsibilidade' },

@@ -36,7 +36,7 @@
       </div>
     </div>
 
-    <v-row class="mb-4" dense>
+    <v-row class="mb-4" density="compact">
       <v-col cols="12" md="6">
         <v-text-field
           v-model="search"

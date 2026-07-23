@@ -75,7 +75,7 @@
       <!-- KPIs do cliente -->
       <v-card class="mb-6" rounded="lg" variant="outlined">
         <v-card-text>
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" sm="4">
               <KpiGauge
                 :color="store.current.healthScore >= 85 ? '#43A047' : store.current.healthScore >= 70 ? '#FB8C00' : '#E53935'"
@@ -125,7 +125,7 @@
             </v-card-text>
           </v-card>
 
-          <v-row class="mb-4" dense>
+          <v-row class="mb-4" density="compact">
             <v-col
               v-for="stat in [
                 { label: 'Receita anual', value: formatCurrency(store.current.receitaAnual, true) },
@@ -151,7 +151,7 @@
             </v-col>
           </v-row>
 
-          <v-row dense>
+          <v-row density="compact">
             <v-col cols="12" md="6">
               <v-card class="h-100" rounded="lg" variant="outlined">
                 <v-card-item>
