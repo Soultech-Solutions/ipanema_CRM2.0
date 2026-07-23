@@ -10,11 +10,21 @@
   const tab = ref('upload')
   const sellers = ref<Seller[]>([])
   const loading = ref(false)
-  const uploadFiles = ref<File[]>([])
+  /** Vuetify file-input (sem multiple) devolve File | null, não File[] */
+  const uploadFiles = ref<File | File[] | null>(null)
   const successMsg = ref('')
   const commercial = useCommercialStore()
   const dashboard = useDashboardStore()
   const directusUrl = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
+
+  const selectedFile = computed(() => {
+    const value = uploadFiles.value
+    if (!value) return null
+    if (Array.isArray(value)) return value[0] ?? null
+    return value
+  })
+
+  const canImport = computed(() => !!selectedFile.value && !commercial.importing && !commercial.syncing)
 
   const excelColumns = Object.keys(CTE_COLUMN_MAP)
 
@@ -75,7 +85,7 @@
   ]
 
   async function runImport () {
-    const file = uploadFiles.value?.[0]
+    const file = selectedFile.value
     if (!file) return
     successMsg.value = ''
     try {
@@ -85,7 +95,7 @@
         ? ' · sincronizado com Directus'
         : ''
       successMsg.value = `Importação concluída: ${commercial.stats?.totalCtes.toLocaleString('pt-BR')} CT-es · ${commercial.stats?.totalClientes} clientes${syncNote}.`
-      uploadFiles.value = []
+      uploadFiles.value = null
     } catch {
       // error already in commercial.error
     }
@@ -233,7 +243,7 @@
             <div class="d-flex flex-wrap ga-2 mt-4">
               <v-btn
                 color="primary"
-                :disabled="!uploadFiles?.length || commercial.syncing"
+                :disabled="!canImport"
                 :loading="commercial.importing || commercial.syncing"
                 prepend-icon="mdi-upload"
                 @click="runImport"
