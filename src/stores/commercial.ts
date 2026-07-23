@@ -1,28 +1,25 @@
 import type { Client, ClientDetail, DashboardData } from '@/types/commercial'
+import type { CteDocument } from '@/types/cte'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import type { AnalyticsResult, ImportStats } from '@/services/cteAnalytics'
-import { parseAndAnalyzeInWorker } from '@/services/importRunner'
+import { analyzeCtes, buildClientDetail, type ImportStats } from '@/services/cteAnalytics'
+import { fetchAndParseCteUrl, parseCteFile } from '@/services/cteParser'
+import { isDirectusSyncEnabled, syncImportToDirectus } from '@/services/directusSync'
 
-const STORAGE_KEY = 'raca_comercial_analytics_v2'
-const SEED_JSON_URL = '/data/analytics-seed.json'
-const SEED_XLSX_URL = '/data/base-fat-raca.xlsx'
+const STORAGE_KEY = 'raca_comercial_analytics_v1'
+const SEED_URL = '/data/base-fat-raca.xlsx'
 
 interface PersistedPayload {
-  version: 2
   stats: ImportStats
   clients: Client[]
   dashboard: DashboardData
-  clientDetails: Record<string, ClientDetail>
 }
 
 function loadPersisted (): PersistedPayload | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const data = JSON.parse(raw) as PersistedPayload
-    if (data?.version !== 2 || !data.dashboard || !data.clients?.length) return null
-    return data
+    return JSON.parse(raw) as PersistedPayload
   } catch {
     return null
   }
@@ -36,108 +33,99 @@ function persist (payload: PersistedPayload) {
   }
 }
 
-function applyResult (
-  result: AnalyticsResult,
-  setters: {
-    clients: { value: Client[] }
-    dashboard: { value: DashboardData | null }
-    stats: { value: ImportStats | null }
-    clientDetails: { value: Record<string, ClientDetail> }
-    ready: { value: boolean }
-  },
-) {
-  setters.clients.value = result.clients
-  setters.dashboard.value = result.dashboard
-  setters.stats.value = result.stats
-  setters.clientDetails.value = result.clientDetails
-  setters.ready.value = true
-  persist({
-    version: 2,
-    stats: result.stats,
-    clients: result.clients,
-    dashboard: result.dashboard,
-    clientDetails: result.clientDetails,
-  })
-}
-
 export const useCommercialStore = defineStore('commercial', () => {
+  const ctes = shallowRef<CteDocument[]>([])
   const clients = ref<Client[]>([])
   const dashboard = ref<DashboardData | null>(null)
   const stats = ref<ImportStats | null>(null)
-  const clientDetails = shallowRef<Record<string, ClientDetail>>({})
   const loading = ref(false)
   const importing = ref(false)
+  const syncing = ref(false)
   const error = ref<string | null>(null)
   const progress = ref('')
   const ready = ref(false)
-
-  let loadPromise: Promise<void> | null = null
+  const lastSyncAt = ref<string | null>(null)
 
   const hasData = computed(() => !!dashboard.value && clients.value.length > 0)
+  const syncToDirectus = computed(() => isDirectusSyncEnabled())
 
-  async function loadSeedJson (): Promise<boolean> {
-    progress.value = 'Carregando indicadores...'
-    const response = await fetch(SEED_JSON_URL)
-    if (!response.ok) return false
-    const data = await response.json() as PersistedPayload
-    if (!data?.dashboard || !data.clients?.length) return false
-
-    clients.value = data.clients
-    dashboard.value = data.dashboard
-    stats.value = data.stats
-    clientDetails.value = data.clientDetails || {}
-    ready.value = true
+  async function applyAnalytics (list: CteDocument[], sourceName: string) {
+    progress.value = 'Calculando indicadores...'
+    const result = analyzeCtes(list, sourceName)
+    ctes.value = list
+    clients.value = result.clients
+    dashboard.value = result.dashboard
+    stats.value = result.stats
     persist({
-      version: 2,
-      stats: data.stats,
-      clients: data.clients,
-      dashboard: data.dashboard,
-      clientDetails: data.clientDetails || {},
+      stats: result.stats,
+      clients: result.clients,
+      dashboard: result.dashboard,
     })
-    return true
-  }
+    ready.value = true
 
-  async function loadSeedXlsx () {
-    progress.value = 'Processando planilha seed...'
-    const response = await fetch(SEED_XLSX_URL)
-    if (!response.ok) throw new Error(`Falha ao carregar planilha (${response.status})`)
-    const buffer = await response.arrayBuffer()
-    const result = await parseAndAnalyzeInWorker(buffer, 'base-fat-raca.xlsx (seed)')
-    applyResult(result, { clients, dashboard, stats, clientDetails, ready })
+    if (syncToDirectus.value) {
+      syncing.value = true
+      try {
+        await syncImportToDirectus(
+          { ctes: list, result },
+          message => {
+            progress.value = message
+          },
+        )
+        lastSyncAt.value = new Date().toISOString()
+      } catch (error_) {
+        const message = error_ instanceof Error ? error_.message : 'Falha ao sincronizar com Directus'
+        error.value = message
+        throw error_
+      } finally {
+        syncing.value = false
+      }
+    }
+
+    progress.value = ''
   }
 
   async function ensureLoaded () {
     if (ready.value && hasData.value) return
-    if (loadPromise) return loadPromise
+    loading.value = true
+    error.value = null
 
-    loadPromise = (async () => {
-      loading.value = true
-      error.value = null
-      try {
-        const cached = loadPersisted()
-        if (cached) {
-          clients.value = cached.clients
-          dashboard.value = cached.dashboard
-          stats.value = cached.stats
-          clientDetails.value = cached.clientDetails || {}
-          ready.value = true
-          return
-        }
-
-        const fromJson = await loadSeedJson().catch(() => false)
-        if (fromJson) return
-
-        await loadSeedXlsx()
-      } catch (error_) {
-        error.value = error_ instanceof Error ? error_.message : 'Erro ao carregar base'
-      } finally {
-        loading.value = false
-        progress.value = ''
-        loadPromise = null
+    try {
+      // Em modo Directus, a fonte da verdade é a API — não força seed local
+      if (syncToDirectus.value) {
+        ready.value = true
+        return
       }
-    })()
 
-    return loadPromise
+      const cached = loadPersisted()
+      if (cached?.dashboard && cached.clients?.length) {
+        clients.value = cached.clients
+        dashboard.value = cached.dashboard
+        stats.value = cached.stats
+        ready.value = true
+        void hydrateCtesFromSeed()
+        return
+      }
+
+      await importFromUrl(SEED_URL, 'base-fat-raca.xlsx (seed)')
+    } catch (error_) {
+      error.value = error_ instanceof Error ? error_.message : 'Erro ao carregar base'
+    } finally {
+      loading.value = false
+    }
+  }
+
+  async function hydrateCtesFromSeed () {
+    if (ctes.value.length) return
+    try {
+      progress.value = 'Carregando CT-es para detalhe...'
+      const list = await fetchAndParseCteUrl(SEED_URL)
+      ctes.value = list
+    } catch {
+      // detail will be limited without raw CT-es
+    } finally {
+      progress.value = ''
+    }
   }
 
   async function importFromUrl (url: string, sourceName: string) {
@@ -145,12 +133,9 @@ export const useCommercialStore = defineStore('commercial', () => {
     error.value = null
     progress.value = 'Lendo planilha...'
     try {
-      const response = await fetch(url)
-      if (!response.ok) throw new Error(`Falha ao carregar planilha (${response.status})`)
-      progress.value = 'Processando em segundo plano...'
-      const buffer = await response.arrayBuffer()
-      const result = await parseAndAnalyzeInWorker(buffer, sourceName)
-      applyResult(result, { clients, dashboard, stats, clientDetails, ready })
+      const list = await fetchAndParseCteUrl(url)
+      if (!list.length) throw new Error('Nenhum CT-e encontrado na planilha')
+      await applyAnalytics(list, sourceName)
     } finally {
       importing.value = false
       progress.value = ''
@@ -162,10 +147,11 @@ export const useCommercialStore = defineStore('commercial', () => {
     error.value = null
     progress.value = `Importando ${file.name}...`
     try {
-      const buffer = await file.arrayBuffer()
-      progress.value = 'Processando em segundo plano...'
-      const result = await parseAndAnalyzeInWorker(buffer, file.name)
-      applyResult(result, { clients, dashboard, stats, clientDetails, ready })
+      const list = await parseCteFile(file)
+      if (!list.length) {
+        throw new Error('Nenhum CT-e válido encontrado. Verifique o layout LOG FALA.')
+      }
+      await applyAnalytics(list, file.name)
     } catch (error_) {
       error.value = error_ instanceof Error ? error_.message : 'Falha no import'
       throw error_
@@ -184,53 +170,55 @@ export const useCommercialStore = defineStore('commercial', () => {
   }
 
   function getClientDetail (id: string): ClientDetail | undefined {
-    const cached = clientDetails.value[id]
-    if (cached) return cached
-
     const client = clients.value.find(c => c.id === id)
     if (!client || !dashboard.value) return undefined
-
-    return {
-      ...client,
-      historicoFaturamento: [],
-      produtos: [client.segmento],
-      rotas: [],
-      destinatarios: 0,
-      embarquesMes: client.frequenciaEmbarques,
-      movimentacoes: [],
-      insights: [{
-        id: `ins-${id}-basic`,
-        titulo: 'Resumo do cliente',
-        descricao: `Health ${client.healthScore} · risco ${(client.probabilidadePerda * 100).toFixed(0)}% · ${client.diasSemEmbarque} dias sem embarque.`,
-        tipo: 'explicacao',
-        clienteId: id,
-        createdAt: new Date().toISOString(),
-      }],
-      recomendacoes: dashboard.value.recomendacoes.filter(r => r.clienteId === id),
+    if (!ctes.value.length) {
+      return {
+        ...client,
+        historicoFaturamento: [],
+        produtos: [client.segmento],
+        rotas: [],
+        destinatarios: 0,
+        embarquesMes: client.frequenciaEmbarques,
+        movimentacoes: [],
+        insights: [{
+          id: `ins-${id}-loading`,
+          titulo: 'Carregando histórico',
+          descricao: 'Os CT-es ainda estão sendo hidratados. Reabra o cliente em instantes.',
+          tipo: 'explicacao',
+          clienteId: id,
+          createdAt: new Date().toISOString(),
+        }],
+        recomendacoes: dashboard.value.recomendacoes.filter(r => r.clienteId === id),
+      }
     }
+    return buildClientDetail(client, ctes.value, dashboard.value)
   }
 
   function clearCache () {
     localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem('raca_comercial_analytics_v1')
+    ctes.value = []
     clients.value = []
     dashboard.value = null
     stats.value = null
-    clientDetails.value = {}
     ready.value = false
+    lastSyncAt.value = null
   }
 
   return {
+    ctes,
     clients,
     dashboard,
     stats,
-    clientDetails,
     loading,
     importing,
+    syncing,
     error,
     progress,
     ready,
     hasData,
+    syncToDirectus,
+    lastSyncAt,
     ensureLoaded,
     importFromFile,
     importFromUrl,
@@ -238,5 +226,6 @@ export const useCommercialStore = defineStore('commercial', () => {
     getClients,
     getClientDetail,
     clearCache,
+    hydrateCtesFromSeed,
   }
 })

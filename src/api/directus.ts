@@ -6,42 +6,21 @@ import type {
   Recommendation,
   Seller,
 } from '@/types/commercial'
-import axios from 'axios'
 import { sellers as mockSellers } from '@/data/mock'
 import { useCommercialStore } from '@/stores/commercial'
+import { directus } from '@/api/directusClient'
+
+export { directus }
 
 const useDirectus = import.meta.env.VITE_USE_MOCK === 'false'
-const baseURL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
-
-export const directus = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-})
-
-directus.interceptors.request.use(config => {
-  const token = localStorage.getItem('directus_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
 
 async function fromDirectus<T> (collection: string, params?: Record<string, unknown>): Promise<T[]> {
   const { data } = await directus.get(`/items/${collection}`, { params })
   return data.data as T[]
 }
 
-/** Cópia leve — evita JSON.parse/stringify pesado no caminho crítico. */
+/** Clona dados plain (evita falha do structuredClone em Proxy do Vue/Pinia). */
 function cloneData<T> (value: T): T {
-  if (typeof structuredClone === 'function') {
-    try {
-      return structuredClone(value)
-    } catch {
-      // Proxy Vue — fallback
-    }
-  }
   return JSON.parse(JSON.stringify(value)) as T
 }
 
@@ -51,9 +30,49 @@ async function withLocalData<T> (fn: (store: ReturnType<typeof useCommercialStor
   return fn(store)
 }
 
+interface DirectusCliente extends Omit<Client, 'id'> {
+  id: string
+  codigo?: string
+}
+
+function mapCliente (row: DirectusCliente): Client {
+  return {
+    ...row,
+    id: row.codigo || row.id,
+  }
+}
+
+function mapClienteDetail (row: DirectusCliente & Record<string, unknown>): ClientDetail {
+  const base = mapCliente(row)
+  const historico = (row.historicoFaturamento
+    || row.historico_faturamento
+    || []) as ClientDetail['historicoFaturamento']
+  const movimentacoes = (row.movimentacoes || []) as ClientDetail['movimentacoes']
+  const insights = ((row.insights || []) as ClientDetail['insights']).map(ins => ({
+    ...ins,
+    clienteId: ins.clienteId ? base.id : undefined,
+  }))
+  const recomendacoes = ((row.recomendacoes || []) as ClientDetail['recomendacoes']).map(rec => ({
+    ...rec,
+    clienteId: rec.clienteId ? base.id : undefined,
+  }))
+
+  return {
+    ...base,
+    historicoFaturamento: historico,
+    movimentacoes,
+    insights,
+    recomendacoes,
+    produtos: (row.produtos as string[]) || [],
+    rotas: (row.rotas as string[]) || [],
+    destinatarios: Number(row.destinatarios || 0),
+    embarquesMes: Number(row.embarquesMes || base.frequenciaEmbarques),
+  }
+}
+
 export async function fetchDashboard (): Promise<DashboardData> {
   if (useDirectus) {
-    const [kpis] = await fromDirectus<{
+    const kpisRows = await fromDirectus<{
       saude_carteira: number
       receita_em_risco: number
       receita_potencial: number
@@ -62,11 +81,20 @@ export async function fetchDashboard (): Promise<DashboardData> {
       cii: number
     }>('dashboard_kpis')
 
+    const kpis = Array.isArray(kpisRows) ? kpisRows[0] : kpisRows
+    if (!kpis) {
+      throw new Error('dashboard_kpis vazio — importe uma planilha LOG FALA em Base de Dados')
+    }
+
     const [insights, recomendacoes, alertas, clientesRisco, aiModules] = await Promise.all([
-      fromDirectus('insights'),
+      fromDirectus('insights', { filter: { clienteId: { _null: true } } }),
       fromDirectus('recomendacoes'),
       fromDirectus('alertas'),
-      fromDirectus('clientes', { filter: { status: { _eq: 'risco' } } }),
+      fromDirectus<DirectusCliente>('clientes', {
+        filter: { status: { _in: ['risco', 'inativo'] } },
+        limit: 12,
+        sort: ['-receitaEmRisco'],
+      }),
       fromDirectus('ai_modules'),
     ])
 
@@ -82,7 +110,7 @@ export async function fetchDashboard (): Promise<DashboardData> {
       insights: insights as DashboardData['insights'],
       recomendacoes: recomendacoes as Recommendation[],
       alertas: alertas as Alert[],
-      clientesRisco: clientesRisco as Client[],
+      clientesRisco: clientesRisco.map(mapCliente),
       aiModules: aiModules as DashboardData['aiModules'],
     }
   }
@@ -95,21 +123,44 @@ export async function fetchDashboard (): Promise<DashboardData> {
 }
 
 export async function fetchClients (): Promise<Client[]> {
-  if (useDirectus) return fromDirectus<Client>('clientes')
+  if (useDirectus) {
+    const rows = await fromDirectus<DirectusCliente>('clientes', {
+      limit: -1,
+      sort: ['-receitaAnual'],
+    })
+    return rows.map(mapCliente)
+  }
   return withLocalData(store => cloneData(store.getClients()))
 }
 
 export async function fetchClientById (id: string): Promise<ClientDetail | undefined> {
   if (useDirectus) {
-    const { data } = await directus.get(`/items/clientes/${id}`, {
+    // Prefer lookup by business codigo; fall back to Directus UUID
+    const { data: byCodigo } = await directus.get('/items/clientes', {
       params: {
+        filter: { codigo: { _eq: id } },
         fields: ['*', 'historico_faturamento.*', 'movimentacoes.*', 'insights.*', 'recomendacoes.*'],
+        limit: 1,
       },
     })
-    return data.data as ClientDetail
+    const fromCodigo = (byCodigo.data as DirectusCliente[] | undefined)?.[0]
+    if (fromCodigo) return mapClienteDetail(fromCodigo as DirectusCliente & Record<string, unknown>)
+
+    try {
+      const { data } = await directus.get(`/items/clientes/${id}`, {
+        params: {
+          fields: ['*', 'historico_faturamento.*', 'movimentacoes.*', 'insights.*', 'recomendacoes.*'],
+        },
+      })
+      if (!data.data) return undefined
+      return mapClienteDetail(data.data as DirectusCliente & Record<string, unknown>)
+    } catch {
+      return undefined
+    }
   }
 
   return withLocalData(async store => {
+    if (!store.ctes.length) await store.hydrateCtesFromSeed()
     const detail = store.getClientDetail(id)
     return detail ? cloneData(detail) : undefined
   })
@@ -129,4 +180,8 @@ export async function fetchAlerts (): Promise<Alert[]> {
 export async function fetchRecommendations (): Promise<Recommendation[]> {
   if (useDirectus) return fromDirectus<Recommendation>('recomendacoes')
   return withLocalData(store => cloneData(store.getDashboard()?.recomendacoes ?? []))
+}
+
+export function isDirectusMode (): boolean {
+  return useDirectus
 }

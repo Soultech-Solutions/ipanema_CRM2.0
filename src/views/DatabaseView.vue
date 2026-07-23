@@ -14,6 +14,7 @@
   const successMsg = ref('')
   const commercial = useCommercialStore()
   const dashboard = useDashboardStore()
+  const directusUrl = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
 
   const excelColumns = Object.keys(CTE_COLUMN_MAP)
 
@@ -80,7 +81,10 @@
     try {
       await commercial.importFromFile(file)
       await dashboard.load()
-      successMsg.value = `Importação concluída: ${commercial.stats?.totalCtes.toLocaleString('pt-BR')} CT-es · ${commercial.stats?.totalClientes} clientes.`
+      const syncNote = commercial.syncToDirectus
+        ? ' · sincronizado com Directus'
+        : ''
+      successMsg.value = `Importação concluída: ${commercial.stats?.totalCtes.toLocaleString('pt-BR')} CT-es · ${commercial.stats?.totalClientes} clientes${syncNote}.`
       uploadFiles.value = []
     } catch {
       // error already in commercial.error
@@ -92,7 +96,9 @@
     commercial.clearCache()
     await commercial.importFromUrl('/data/base-fat-raca.xlsx', 'base-fat-raca.xlsx')
     await dashboard.load()
-    successMsg.value = 'Base seed recarregada com sucesso.'
+    successMsg.value = commercial.syncToDirectus
+      ? 'Base seed recarregada e sincronizada com Directus.'
+      : 'Base seed recarregada com sucesso.'
   }
 
   onMounted(async () => {
@@ -184,8 +190,18 @@
               prepend-icon="mdi-file-excel"
               show-size
               variant="outlined"
-              :disabled="commercial.importing"
+              :disabled="commercial.importing || commercial.syncing"
             />
+
+            <v-alert
+              v-if="commercial.syncToDirectus"
+              class="mt-2"
+              type="info"
+              variant="tonal"
+            >
+              Modo Directus ativo — o import recalcula indicadores e popula a API
+              (<code>{{ directusUrl }}</code>).
+            </v-alert>
 
             <v-alert
               v-if="commercial.progress"
@@ -217,8 +233,8 @@
             <div class="d-flex flex-wrap ga-2 mt-4">
               <v-btn
                 color="primary"
-                :disabled="!uploadFiles?.length"
-                :loading="commercial.importing"
+                :disabled="!uploadFiles?.length || commercial.syncing"
+                :loading="commercial.importing || commercial.syncing"
                 prepend-icon="mdi-upload"
                 @click="runImport"
               >
@@ -226,7 +242,8 @@
               </v-btn>
 
               <v-btn
-                :loading="commercial.importing"
+                :disabled="commercial.syncing"
+                :loading="commercial.importing || commercial.syncing"
                 prepend-icon="mdi-database-refresh"
                 variant="tonal"
                 @click="reloadSeed"
@@ -237,7 +254,10 @@
 
             <v-alert class="mt-4" type="info" variant="tonal">
               Layout: 1 linha = 1 CT-e. O import recalcula Health Score, CII,
-              alertas, recomendações e a carteira de clientes.
+              alertas, recomendações e a carteira de clientes
+              <template v-if="commercial.syncToDirectus">
+                e grava em Directus (ctes, clientes, KPIs)
+              </template>.
             </v-alert>
 
             <div class="text-subtitle-2 font-weight-bold mt-6 mb-2">
