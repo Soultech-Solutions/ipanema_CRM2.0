@@ -1,7 +1,10 @@
 services:
+  # Local/dev only. Production uses an existing Postgres (see docker-compose.prod.yml).
   database:
     image: postgres:16-alpine
     restart: unless-stopped
+    profiles:
+      - local-db
     volumes:
       - directus_pg_data:/var/lib/postgresql/data
     environment:
@@ -34,9 +37,10 @@ services:
       - ./directus/uploads:/directus/uploads
       - ./directus/extensions:/directus/extensions
       - ./directus/snapshots:/directus/snapshots
+    extra_hosts:
+      # Allows DB_HOST=host.docker.internal when Postgres runs on the VPS host
+      - 'host.docker.internal:host-gateway'
     depends_on:
-      database:
-        condition: service_healthy
       cache:
         condition: service_healthy
     healthcheck:
@@ -48,8 +52,8 @@ services:
     environment:
       SECRET: ${DIRECTUS_SECRET:?Set DIRECTUS_SECRET in .env}
       DB_CLIENT: pg
-      DB_HOST: database
-      DB_PORT: 5432
+      DB_HOST: ${DB_HOST:-database}
+      DB_PORT: ${DB_PORT:-5432}
       DB_DATABASE: ${DB_DATABASE:-directus}
       DB_USER: ${DB_USER:-directus}
       DB_PASSWORD: ${DB_PASSWORD:-directus}

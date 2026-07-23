@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Deploy Directus API to api-raca-comercial.soultech.solutions
 #
+# Uses the VPS existing PostgreSQL (credentials from .env).
+# Does NOT start a Postgres container.
+#
 # Usage (on the server, from the project root):
 #   ./scripts/deploy.sh
 #   ./scripts/deploy.sh --bootstrap   # also create/update collections
@@ -9,7 +12,8 @@
 # Prerequisites:
 #   - Docker + Docker Compose
 #   - .env configured (copy from .env.production.example)
-#   - Reverse proxy (nginx/Caddy/Traefik) terminating TLS for:
+#   - Existing Postgres reachable from Docker (see DB_HOST)
+#   - Reverse proxy terminating TLS for:
 #       api-raca-comercial.soultech.solutions → http://127.0.0.1:8055
 
 set -euo pipefail
@@ -18,7 +22,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
 
 PUBLIC_HOST="api-raca-comercial.soultech.solutions"
-PUBLIC_URL="https://${PUBLIC_HOST}"
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 DO_BOOTSTRAP=0
 DO_PULL=0
@@ -28,7 +31,7 @@ for arg in "$@"; do
     --bootstrap) DO_BOOTSTRAP=1 ;;
     --pull) DO_PULL=1 ;;
     -h|--help)
-      sed -n '2,14p' "$0"
+      sed -n '2,18p' "$0"
       exit 0
       ;;
     *)
@@ -62,13 +65,17 @@ source .env
 set +a
 
 : "${DIRECTUS_SECRET:?Set DIRECTUS_SECRET in .env}"
+: "${DB_HOST:?Set DB_HOST in .env (existing Postgres host)}"
+: "${DB_PORT:?Set DB_PORT in .env}"
+: "${DB_USER:?Set DB_USER in .env}"
 : "${DB_PASSWORD:?Set DB_PASSWORD in .env}"
+: "${DB_DATABASE:?Set DB_DATABASE in .env}"
 : "${ADMIN_EMAIL:?Set ADMIN_EMAIL in .env}"
 : "${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}"
 
-# Force production public URL for this host
 export PUBLIC_URL="https://${PUBLIC_HOST}"
 log "PUBLIC_URL=${PUBLIC_URL}"
+log "DB_HOST=${DB_HOST}:${DB_PORT}/${DB_DATABASE} (user=${DB_USER})"
 
 if [[ "$DO_PULL" -eq 1 ]]; then
   log "Pulling latest git changes"
@@ -76,10 +83,16 @@ if [[ "$DO_PULL" -eq 1 ]]; then
 fi
 
 log "Pulling Docker images"
-"${COMPOSE[@]}" pull database cache directus
+"${COMPOSE[@]}" pull cache directus
 
-log "Starting API stack (database, cache, directus)"
-"${COMPOSE[@]}" up -d --remove-orphans database cache directus
+log "Starting API stack (cache + directus — no Postgres container)"
+"${COMPOSE[@]}" up -d --remove-orphans --pull missing cache directus
+
+# Ensure any previously started Compose Postgres is stopped
+if "${COMPOSE[@]}" ps --status running --services 2>/dev/null | grep -qx database; then
+  log "Stopping Compose database service (using external Postgres)"
+  "${COMPOSE[@]}" stop database >/dev/null 2>&1 || true
+fi
 
 log "Waiting for Directus health"
 for i in $(seq 1 60); do
@@ -88,13 +101,16 @@ for i in $(seq 1 60); do
   fi
   if [[ "$i" -eq 60 ]]; then
     "${COMPOSE[@]}" logs --tail 80 directus || true
-    die "Directus did not become healthy in time"
+    die "Directus did not become healthy in time (check DB_HOST / credentials / pg_hba.conf)"
   fi
   sleep 2
 done
 
 if [[ "$DO_BOOTSTRAP" -eq 1 ]]; then
   log "Bootstrapping Directus collections"
+  if ! command -v node >/dev/null 2>&1; then
+    die "Node.js is required on the host for --bootstrap (or run bootstrap from CI)"
+  fi
   DIRECTUS_URL="http://127.0.0.1:${DIRECTUS_PORT:-8055}" \
   ADMIN_EMAIL="$ADMIN_EMAIL" \
   ADMIN_PASSWORD="$ADMIN_PASSWORD" \

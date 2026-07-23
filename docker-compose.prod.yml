@@ -4,11 +4,20 @@ services:
     profiles:
       - frontend
 
+  # Do not start the Compose Postgres — use the VPS existing database.
+  database:
+    profiles:
+      - never
+
   directus:
     ports:
       - '${DIRECTUS_PORT:-8055}:8055'
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-https://api-raca-comercial.soultech.solutions}
       CORS_ORIGIN: ${CORS_ORIGIN:-true}
-      # Trust reverse-proxy headers (nginx / Caddy / Traefik)
+      DB_HOST: ${DB_HOST:?Set DB_HOST to your existing Postgres host}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_DATABASE: ${DB_DATABASE:?Set DB_DATABASE in .env}
+      DB_USER: ${DB_USER:?Set DB_USER in .env}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env}
       PRESSURE_LIMITER_ENABLED: 'false'

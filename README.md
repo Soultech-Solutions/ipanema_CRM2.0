@@ -77,6 +77,8 @@ Options:
 
 Point your reverse proxy (TLS) at `127.0.0.1:8055`.
 
+Production uses your **existing PostgreSQL** — set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_DATABASE` in `.env`. If Postgres is on the same VPS, use `DB_HOST=host.docker.internal`.
+
 ## Project structure
 
 - `src/main.ts` — app entry
