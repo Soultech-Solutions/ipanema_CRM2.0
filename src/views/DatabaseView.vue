@@ -1,16 +1,39 @@
 <script lang="ts" setup>
   import type { Seller } from '@/types/commercial'
   import { CTE_COLUMN_MAP } from '@/types/cte'
-  import { onMounted, ref } from 'vue'
+  import { computed, onMounted, ref } from 'vue'
   import { fetchSellers } from '@/api/directus'
+  import { useCommercialStore } from '@/stores/commercial'
+  import { useDashboardStore } from '@/stores/dashboard'
   import { formatCurrency, formatPercent } from '@/utils/format'
 
   const tab = ref('upload')
   const sellers = ref<Seller[]>([])
   const loading = ref(false)
   const uploadFiles = ref<File[]>([])
+  const successMsg = ref('')
+  const commercial = useCommercialStore()
+  const dashboard = useDashboardStore()
 
   const excelColumns = Object.keys(CTE_COLUMN_MAP)
+
+  const statsCards = computed(() => {
+    const s = commercial.stats
+    if (!s) {
+      return [
+        { label: 'CT-es na base', value: '—', icon: 'mdi-file-document' },
+        { label: 'Clientes pagadores', value: '—', icon: 'mdi-account-group' },
+        { label: 'CT-es em aberto', value: '—', icon: 'mdi-file-clock' },
+        { label: 'Reentregas', value: '—', icon: 'mdi-truck-delivery' },
+      ]
+    }
+    return [
+      { label: 'CT-es na base', value: s.totalCtes.toLocaleString('pt-BR'), icon: 'mdi-file-document' },
+      { label: 'Clientes pagadores', value: s.totalClientes.toLocaleString('pt-BR'), icon: 'mdi-account-group' },
+      { label: 'CT-es em aberto', value: s.ctesAbertos.toLocaleString('pt-BR'), icon: 'mdi-file-clock' },
+      { label: 'Reentregas', value: s.reentregas.toLocaleString('pt-BR'), icon: 'mdi-truck-delivery' },
+    ]
+  })
 
   const derivedMetrics = [
     { from: 'VALOR + DT. CADASTRO', to: 'Faturamento histórico / vs meta' },
@@ -50,9 +73,32 @@
     },
   ]
 
+  async function runImport () {
+    const file = uploadFiles.value?.[0]
+    if (!file) return
+    successMsg.value = ''
+    try {
+      await commercial.importFromFile(file)
+      await dashboard.load()
+      successMsg.value = `Importação concluída: ${commercial.stats?.totalCtes.toLocaleString('pt-BR')} CT-es · ${commercial.stats?.totalClientes} clientes.`
+      uploadFiles.value = []
+    } catch {
+      // error already in commercial.error
+    }
+  }
+
+  async function reloadSeed () {
+    successMsg.value = ''
+    commercial.clearCache()
+    await commercial.importFromUrl('/data/base-fat-raca.xlsx', 'base-fat-raca.xlsx')
+    await dashboard.load()
+    successMsg.value = 'Base seed recarregada com sucesso.'
+  }
+
   onMounted(async () => {
     loading.value = true
     try {
+      await commercial.ensureLoaded()
       sellers.value = await fetchSellers()
     } finally {
       loading.value = false
@@ -117,21 +163,81 @@
       <v-tabs-window v-model="tab">
         <v-tabs-window-item value="upload">
           <v-card-text class="pa-6">
+            <v-alert
+              v-if="commercial.stats"
+              class="mb-4"
+              type="success"
+              variant="tonal"
+            >
+              Base ativa:
+              <strong>{{ commercial.stats.sourceName }}</strong>
+              · {{ commercial.stats.totalCtes.toLocaleString('pt-BR') }} CT-es
+              · {{ commercial.stats.totalClientes }} clientes
+              · faturamento {{ formatCurrency(commercial.stats.totalValor, true) }}
+            </v-alert>
+
             <v-file-input
               v-model="uploadFiles"
               accept=".xlsx,.xls,.csv"
               chips
-              label="Selecione a base LOG FALA (Excel ou CSV)"
-              multiple
+              label="Selecione a base LOG FALA (Excel)"
               prepend-icon="mdi-file-excel"
               show-size
               variant="outlined"
+              :disabled="commercial.importing"
             />
 
-            <v-alert class="mt-2" type="info" variant="tonal">
-              Layout esperado: 1 linha = 1 CT-e. Collection Directus:
-              <code>ctes</code> (grain transacional). Clientes e KPIs são
-              agregados a partir desta base.
+            <v-alert
+              v-if="commercial.progress"
+              class="mt-2"
+              type="info"
+              variant="tonal"
+            >
+              {{ commercial.progress }}
+            </v-alert>
+
+            <v-alert
+              v-if="commercial.error"
+              class="mt-2"
+              type="error"
+              variant="tonal"
+            >
+              {{ commercial.error }}
+            </v-alert>
+
+            <v-alert
+              v-if="successMsg"
+              class="mt-2"
+              type="success"
+              variant="tonal"
+            >
+              {{ successMsg }}
+            </v-alert>
+
+            <div class="d-flex flex-wrap ga-2 mt-4">
+              <v-btn
+                color="primary"
+                :disabled="!uploadFiles?.length"
+                :loading="commercial.importing"
+                prepend-icon="mdi-upload"
+                @click="runImport"
+              >
+                Importar e consolidar
+              </v-btn>
+
+              <v-btn
+                :loading="commercial.importing"
+                prepend-icon="mdi-database-refresh"
+                variant="tonal"
+                @click="reloadSeed"
+              >
+                Recarregar base seed
+              </v-btn>
+            </div>
+
+            <v-alert class="mt-4" type="info" variant="tonal">
+              Layout: 1 linha = 1 CT-e. O import recalcula Health Score, CII,
+              alertas, recomendações e a carteira de clientes.
             </v-alert>
 
             <div class="text-subtitle-2 font-weight-bold mt-6 mb-2">
@@ -167,14 +273,6 @@
                 </tr>
               </tbody>
             </v-table>
-
-            <v-btn
-              color="primary"
-              :disabled="!uploadFiles?.length"
-              prepend-icon="mdi-upload"
-            >
-              Enviar para consolidação
-            </v-btn>
           </v-card-text>
         </v-tabs-window-item>
 
@@ -254,12 +352,7 @@
           <v-card-text class="pa-6">
             <v-row>
               <v-col
-                v-for="kpi in [
-                  { label: 'CT-es na base', value: '65.326', icon: 'mdi-file-document' },
-                  { label: 'Clientes pagadores', value: '208', icon: 'mdi-account-group' },
-                  { label: 'CT-es em aberto', value: '2.332', icon: 'mdi-file-clock' },
-                  { label: 'Reentregas', value: '650', icon: 'mdi-truck-delivery' },
-                ]"
+                v-for="kpi in statsCards"
                 :key="kpi.label"
                 cols="6"
                 md="3"

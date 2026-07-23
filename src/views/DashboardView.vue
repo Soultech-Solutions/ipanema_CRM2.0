@@ -4,10 +4,12 @@
   import CiiCard from '@/components/kpi/CiiCard.vue'
   import InsightPanel from '@/components/kpi/InsightPanel.vue'
   import KpiGauge from '@/components/kpi/KpiGauge.vue'
+  import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
   import { formatCurrency, healthColor, priorityColor } from '@/utils/format'
 
   const store = useDashboardStore()
+  const commercial = useCommercialStore()
   const router = useRouter()
 
   onMounted(() => {
@@ -25,6 +27,7 @@
 
         <p class="text-body-2 text-medium-emphasis mb-0">
           Saúde da carteira, riscos, oportunidades e recomendações geradas por IA.
+          <span v-if="commercial.progress" class="text-primary"> · {{ commercial.progress }}</span>
         </p>
       </div>
 

@@ -3,6 +3,7 @@
   import { useRoute, useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
   import logoRaca from '@/assets/logo-raca.png'
+  import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
 
   const drawer = ref(true)
@@ -11,6 +12,7 @@
   const router = useRouter()
   const theme = useTheme()
   const dashboard = useDashboardStore()
+  const commercial = useCommercialStore()
 
   onMounted(() => {
     if (!dashboard.data) dashboard.load()
@@ -27,7 +29,13 @@
 
   const pageTitle = computed(() => (route.meta.title as string) || 'Raça analise comercial')
   const isDark = computed(() => theme.global.current.value.dark)
-  const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
+  const baseLabel = computed(() => {
+    if (commercial.importing || commercial.loading) return 'Carregando base…'
+    if (commercial.stats) {
+      return `${commercial.stats.totalCtes.toLocaleString('pt-BR')} CT-es`
+    }
+    return 'Base local'
+  })
 
   function isActive (item: (typeof navItems)[0]) {
     if (item.exact) return route.path === item.to
@@ -120,13 +128,12 @@
       <v-spacer />
 
       <v-chip
-        v-if="useMock"
         class="me-3"
-        color="warning"
+        color="secondary"
         size="small"
         variant="tonal"
       >
-        Dados mock
+        {{ baseLabel }}
       </v-chip>
 
       <v-btn

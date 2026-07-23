@@ -7,16 +7,10 @@ import type {
   Seller,
 } from '@/types/commercial'
 import axios from 'axios'
-import {
-  alerts,
-  clients,
-  getClientDetail,
-  mockDashboard,
-  recommendations,
-  sellers,
-} from '@/data/mock'
+import { sellers as mockSellers } from '@/data/mock'
+import { useCommercialStore } from '@/stores/commercial'
 
-const useMock = import.meta.env.VITE_USE_MOCK !== 'false'
+const useDirectus = import.meta.env.VITE_USE_MOCK === 'false'
 const baseURL = import.meta.env.VITE_DIRECTUS_URL || 'http://localhost:8055'
 
 export const directus = axios.create({
@@ -39,91 +33,94 @@ async function fromDirectus<T> (collection: string, params?: Record<string, unkn
   return data.data as T[]
 }
 
+/** Clona dados plain (evita falha do structuredClone em Proxy do Vue/Pinia). */
+function cloneData<T> (value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+async function withLocalData<T> (fn: (store: ReturnType<typeof useCommercialStore>) => T | Promise<T>): Promise<T> {
+  const store = useCommercialStore()
+  await store.ensureLoaded()
+  return fn(store)
+}
+
 export async function fetchDashboard (): Promise<DashboardData> {
-  if (useMock) {
-    await delay(300)
-    return structuredClone(mockDashboard)
+  if (useDirectus) {
+    const [kpis] = await fromDirectus<{
+      saude_carteira: number
+      receita_em_risco: number
+      receita_potencial: number
+      eficiencia_comercial: number
+      crescimento_sustentavel: number
+      cii: number
+    }>('dashboard_kpis')
+
+    const [insights, recomendacoes, alertas, clientesRisco, aiModules] = await Promise.all([
+      fromDirectus('insights'),
+      fromDirectus('recomendacoes'),
+      fromDirectus('alertas'),
+      fromDirectus('clientes', { filter: { status: { _eq: 'risco' } } }),
+      fromDirectus('ai_modules'),
+    ])
+
+    return {
+      kpis: {
+        saudeCarteira: kpis.saude_carteira,
+        receitaEmRisco: kpis.receita_em_risco,
+        receitaPotencial: kpis.receita_potencial,
+        eficienciaComercial: kpis.eficiencia_comercial,
+        crescimentoSustentavel: kpis.crescimento_sustentavel,
+        cii: kpis.cii,
+      },
+      insights: insights as DashboardData['insights'],
+      recomendacoes: recomendacoes as Recommendation[],
+      alertas: alertas as Alert[],
+      clientesRisco: clientesRisco as Client[],
+      aiModules: aiModules as DashboardData['aiModules'],
+    }
   }
 
-  const [kpis] = await fromDirectus<{
-    saude_carteira: number
-    receita_em_risco: number
-    receita_potencial: number
-    eficiencia_comercial: number
-    crescimento_sustentavel: number
-    cii: number
-  }>('dashboard_kpis')
-
-  const [insights, recomendacoes, alertas, clientesRisco, aiModules] = await Promise.all([
-    fromDirectus('insights'),
-    fromDirectus('recomendacoes'),
-    fromDirectus('alertas'),
-    fromDirectus('clientes', { filter: { status: { _eq: 'risco' } } }),
-    fromDirectus('ai_modules'),
-  ])
-
-  return {
-    kpis: {
-      saudeCarteira: kpis.saude_carteira,
-      receitaEmRisco: kpis.receita_em_risco,
-      receitaPotencial: kpis.receita_potencial,
-      eficienciaComercial: kpis.eficiencia_comercial,
-      crescimentoSustentavel: kpis.crescimento_sustentavel,
-      cii: kpis.cii,
-    },
-    insights: insights as DashboardData['insights'],
-    recomendacoes: recomendacoes as Recommendation[],
-    alertas: alertas as Alert[],
-    clientesRisco: clientesRisco as Client[],
-    aiModules: aiModules as DashboardData['aiModules'],
-  }
+  return withLocalData(store => {
+    const data = store.getDashboard()
+    if (!data) throw new Error('Base comercial ainda não carregada')
+    return cloneData(data)
+  })
 }
 
 export async function fetchClients (): Promise<Client[]> {
-  if (useMock) {
-    await delay(200)
-    return structuredClone(clients)
-  }
-  return fromDirectus<Client>('clientes')
+  if (useDirectus) return fromDirectus<Client>('clientes')
+  return withLocalData(store => cloneData(store.getClients()))
 }
 
 export async function fetchClientById (id: string): Promise<ClientDetail | undefined> {
-  if (useMock) {
-    await delay(250)
-    return getClientDetail(id)
+  if (useDirectus) {
+    const { data } = await directus.get(`/items/clientes/${id}`, {
+      params: {
+        fields: ['*', 'historico_faturamento.*', 'movimentacoes.*', 'insights.*', 'recomendacoes.*'],
+      },
+    })
+    return data.data as ClientDetail
   }
-  const { data } = await directus.get(`/items/clientes/${id}`, {
-    params: {
-      fields: ['*', 'historico_faturamento.*', 'movimentacoes.*', 'insights.*', 'recomendacoes.*'],
-    },
+
+  return withLocalData(async store => {
+    if (!store.ctes.length) await store.hydrateCtesFromSeed()
+    const detail = store.getClientDetail(id)
+    return detail ? cloneData(detail) : undefined
   })
-  return data.data as ClientDetail
 }
 
 export async function fetchSellers (): Promise<Seller[]> {
-  if (useMock) {
-    await delay(200)
-    return structuredClone(sellers)
-  }
-  return fromDirectus<Seller>('vendedores')
+  if (useDirectus) return fromDirectus<Seller>('vendedores')
+  // Base LOG FALA não possui vendedor — placeholder até fonte complementar
+  return cloneData(mockSellers)
 }
 
 export async function fetchAlerts (): Promise<Alert[]> {
-  if (useMock) {
-    await delay(150)
-    return structuredClone(alerts)
-  }
-  return fromDirectus<Alert>('alertas')
+  if (useDirectus) return fromDirectus<Alert>('alertas')
+  return withLocalData(store => cloneData(store.getDashboard()?.alertas ?? []))
 }
 
 export async function fetchRecommendations (): Promise<Recommendation[]> {
-  if (useMock) {
-    await delay(150)
-    return structuredClone(recommendations)
-  }
-  return fromDirectus<Recommendation>('recomendacoes')
-}
-
-function delay (ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  if (useDirectus) return fromDirectus<Recommendation>('recomendacoes')
+  return withLocalData(store => cloneData(store.getDashboard()?.recomendacoes ?? []))
 }

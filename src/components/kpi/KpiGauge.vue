@@ -27,12 +27,35 @@
     return Math.min(100, Math.max(0, (numericValue.value / props.max) * 100))
   })
 
-  const display = computed(() => {
+  const rawDisplay = computed(() => {
     if (typeof props.value === 'string') return props.value
     return `${props.value}${props.suffix}`
   })
 
-  // Arc from -135° to 135° (270° sweep)
+  /** Separa "R$ 105,9 mi" em prefixo + valor para caber no gauge. */
+  const parts = computed(() => {
+    const text = rawDisplay.value.trim()
+    const match = /^R\$\s*(.+)$/i.exec(text)
+    if (match) {
+      return { prefix: 'R$', main: match[1] }
+    }
+    return { prefix: '', main: text }
+  })
+
+  const mainLength = computed(() => parts.value.main.length)
+
+  const mainStyle = computed(() => {
+    let fontSize = '1.35rem'
+    if (mainLength.value >= 10) fontSize = '0.88rem'
+    else if (mainLength.value >= 8) fontSize = '1rem'
+    else if (mainLength.value >= 6) fontSize = '1.15rem'
+
+    return {
+      color: props.color,
+      fontSize,
+    }
+  })
+
   const radius = 54
   const circumference = 2 * Math.PI * radius
   const arcLength = circumference * 0.75
@@ -42,7 +65,7 @@
 <template>
   <div class="kpi-gauge">
     <div class="kpi-gauge__ring">
-      <svg class="kpi-gauge__svg" viewBox="0 0 140 120">
+      <svg class="kpi-gauge__svg" viewBox="0 0 140 120" aria-hidden="true">
         <path
           class="kpi-gauge__track"
           d="M 20 100 A 54 54 0 1 1 120 100"
@@ -64,8 +87,20 @@
       </svg>
 
       <div class="kpi-gauge__center">
-        <v-icon class="mb-1" :color="color" size="20">{{ icon }}</v-icon>
-        <div class="kpi-gauge__value-text" :style="{ color }">{{ display }}</div>
+        <v-icon class="kpi-gauge__icon" :color="color" size="16">{{ icon }}</v-icon>
+
+        <div class="kpi-gauge__value-block">
+          <span
+            v-if="parts.prefix"
+            class="kpi-gauge__prefix"
+            :style="{ color }"
+          >
+            {{ parts.prefix }}
+          </span>
+          <span class="kpi-gauge__value-text" :style="mainStyle">
+            {{ parts.main }}
+          </span>
+        </div>
       </div>
     </div>
 
@@ -78,18 +113,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 8px;
+  padding: 8px 4px 12px;
+  min-width: 0;
+  width: 100%;
 }
 
 .kpi-gauge__ring {
   position: relative;
-  width: 140px;
-  height: 110px;
+  width: min(100%, 160px);
+  aspect-ratio: 140 / 120;
 }
 
 .kpi-gauge__svg {
   width: 100%;
   height: 100%;
+  display: block;
 }
 
 .kpi-gauge__track {
@@ -102,27 +140,56 @@
 
 .kpi-gauge__center {
   position: absolute;
-  inset: 0;
+  inset: 16% 6% 20%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding-top: 12px;
+  gap: 2px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.kpi-gauge__icon {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.kpi-gauge__value-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.05;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.kpi-gauge__prefix {
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  line-height: 1;
 }
 
 .kpi-gauge__value-text {
-  font-size: 1.35rem;
   font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .kpi-gauge__label {
-  margin-top: 4px;
-  font-size: 0.8rem;
+  margin-top: 6px;
+  font-size: 0.78rem;
   font-weight: 500;
   text-align: center;
   opacity: 0.75;
-  max-width: 140px;
+  max-width: 160px;
+  line-height: 1.25;
+  padding: 0 4px;
 }
 </style>
