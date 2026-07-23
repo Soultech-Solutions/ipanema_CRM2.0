@@ -11,7 +11,7 @@ services:
 
   directus:
     ports:
-      - '${DIRECTUS_PORT:-8055}:8055'
+      - '${DIRECTUS_PORT:-8083}:8055'
     environment:
       PUBLIC_URL: ${PUBLIC_URL:-https://api-raca-comercial.soultech.solutions}
       CORS_ORIGIN: ${CORS_ORIGIN:-true}

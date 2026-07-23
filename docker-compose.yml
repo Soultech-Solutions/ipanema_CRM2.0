@@ -32,7 +32,7 @@ services:
     image: directus/directus:11.9.2
     restart: unless-stopped
     ports:
-      - '${DIRECTUS_PORT:-8055}:8055'
+      - '${DIRECTUS_PORT:-8083}:8055'
     volumes:
       - ./directus/uploads:/directus/uploads
       - ./directus/extensions:/directus/extensions

@@ -17,8 +17,8 @@
     "docker:backend": "docker compose --profile local-db up -d database cache directus",
     "directus:bootstrap": "node scripts/bootstrap-directus.mjs",
     "directus:snapshot": "docker compose exec directus npx directus schema snapshot ./snapshots/snapshot.yaml",
-    "deploy": "bash scripts/deploy.sh",
-    "deploy:bootstrap": "bash scripts/deploy.sh --bootstrap"
+    "deploy": "bash scripts/deploy.sh --env-file .env.production",
+    "deploy:bootstrap": "bash scripts/deploy.sh --env-file .env.production --bootstrap"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.3.0",

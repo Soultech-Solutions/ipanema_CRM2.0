@@ -15,5 +15,5 @@
 - `npm run docker:up` — frontend + Directus + Postgres + Redis
 - `npm run docker:backend` — local Directus + Compose Postgres + Redis
 - `npm run directus:bootstrap` — create collections matching `src/api/directus.ts`
-- `./scripts/deploy.sh` — VPS API deploy using existing Postgres (`api-raca-comercial.soultech.solutions`)
+- `./scripts/deploy.sh --env-file .env.production` — SSH/rsync deploy Directus to the VPS
 - Admin UI: http://localhost:8055 (default `admin@example.com` / `admin123` in `.env`)

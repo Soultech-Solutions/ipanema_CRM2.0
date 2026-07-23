@@ -61,25 +61,20 @@ Bootstrap creates collections used by `src/api/directus.ts`:
 
 Target: `https://api-raca-comercial.soultech.solutions`
 
-On the server:
+Run **from your laptop** (SSH + rsync to the VPS):
 
 ```bash
-cp .env.production.example .env   # set secrets
-./scripts/deploy.sh --bootstrap
-# or: npm run deploy:bootstrap
+cp .env.production.example .env.production
+# fill DEPLOY_SSH, DEPLOY_PATH, DB_*, DIRECTUS_SECRET, ADMIN_*
+
+./scripts/deploy.sh --env-file .env.production
+# first time / schema:
+./scripts/deploy.sh --env-file .env.production --bootstrap
 ```
 
-Options:
+This syncs the repo to the VPS and starts **Directus + Redis** there. It does **not** start Postgres — set `DB_*` to your existing database.
 
-- `./scripts/deploy.sh` — pull images + restart API stack
-- `./scripts/deploy.sh --pull` — `git pull --ff-only` then deploy
-- `./scripts/deploy.sh --bootstrap` — also run collection bootstrap
-
-Point your reverse proxy (TLS) at `127.0.0.1:8055`.
-
-Production uses your **existing PostgreSQL** — set `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, and `DB_DATABASE` in `.env`. If Postgres is on the same VPS, use `DB_HOST=host.docker.internal`.
-
-## Project structure
+Point reverse proxy (TLS) at `127.0.0.1:8055` on the VPS.
 
 - `src/main.ts` — app entry
 - `src/api/directus.ts` — Directus API client (mock toggle via `VITE_USE_MOCK`)
