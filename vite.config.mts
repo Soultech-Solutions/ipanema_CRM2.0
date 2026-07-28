@@ -6,6 +6,8 @@ import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // App is served under https://host/raca-comercial/
+  base: '/raca-comercial/',
   plugins: [
     Vue({
       template: { transformAssetUrls },

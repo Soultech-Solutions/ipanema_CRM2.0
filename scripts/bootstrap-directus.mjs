@@ -165,6 +165,7 @@ function stringField (field, options = {}) {
       is_nullable: !options.required,
       default_value: options.default ?? null,
       max_length: options.maxLength ?? 255,
+      is_unique: options.unique ?? false,
     },
   }
 }
@@ -345,6 +346,11 @@ async function bootstrap () {
       collection: 'clientes',
       meta: { icon: 'groups', note: 'Carteira de clientes' },
       fields: [
+        stringField('codigo', {
+          required: true,
+          unique: true,
+          note: 'ID de negócio: cli-cliente-83347',
+        }),
         stringField('nome', { required: true }),
         stringField('documento'),
         stringField('segmento'),
@@ -499,6 +505,12 @@ async function bootstrap () {
       collection: 'ctes',
       meta: { icon: 'local_shipping', note: 'Base de CT-es (grain: 1 linha = 1 CT-e)' },
       fields: [
+        stringField('chave', {
+          required: true,
+          unique: true,
+          maxLength: 128,
+          note: 'filial|serie|codigo',
+        }),
         stringField('tipoDocumento'),
         stringField('filial'),
         stringField('serie'),
@@ -538,6 +550,19 @@ async function bootstrap () {
         textField('observacoes'),
       ],
     },
+    {
+      collection: 'importacoes',
+      meta: { icon: 'cloud_upload', note: 'Log de uploads LOG FALA' },
+      fields: [
+        stringField('source_name', { required: true, width: 'full' }),
+        timestampField('imported_at', { required: true }),
+        integerField('total_ctes', { default: 0 }),
+        integerField('total_clientes', { default: 0 }),
+        floatField('total_valor', { default: 0 }),
+        selectField('status', ['ok', 'erro'], { required: true, default: 'ok' }),
+        textField('error_message'),
+      ],
+    },
   ]
 
   for (const def of definitions) {
@@ -548,6 +573,20 @@ async function bootstrap () {
     console.log(`• create ${def.collection}`)
     await createCollection(token, def.collection, def.meta, def.fields)
   }
+
+  // Fields added after initial bootstrap (idempotent)
+  console.log('• ensure clientes.codigo / ctes.chave')
+  await createField(token, 'clientes', stringField('codigo', {
+    required: true,
+    unique: true,
+    note: 'ID de negócio: cli-cliente-83347',
+  }))
+  await createField(token, 'ctes', stringField('chave', {
+    required: true,
+    unique: true,
+    maxLength: 128,
+    note: 'filial|serie|codigo',
+  }))
 
   // Alias O2M fields on clientes expected by the API client
   console.log('• ensure relation fields on clientes')

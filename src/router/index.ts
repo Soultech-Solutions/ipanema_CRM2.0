@@ -1,11 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { title: 'Login', public: true },
+    },
+    {
       path: '/',
       component: () => import('@/layouts/AppLayout.vue'),
+      meta: { requiresAuth: true },
       children: [
         {
           path: '',
@@ -58,6 +66,42 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach(async to => {
+  const auth = useAuthStore()
+  const authRequired = import.meta.env.VITE_USE_MOCK === 'false'
+  const isPublic = to.matched.some(r => r.meta.public)
+  const requiresAuth = authRequired && to.matched.some(r => r.meta.requiresAuth)
+
+  if (requiresAuth && !auth.isAuthenticated) {
+    return {
+      name: 'login',
+      query: { redirect: to.fullPath },
+    }
+  }
+
+  if (to.name === 'login' && !authRequired) {
+    return { path: '/' }
+  }
+
+  if (to.name === 'login' && auth.isAuthenticated) {
+    const ok = await auth.hydrate()
+    if (ok) return { path: '/' }
+  }
+
+  if (requiresAuth && auth.isAuthenticated && !auth.user) {
+    const ok = await auth.hydrate()
+    if (!ok) {
+      return {
+        name: 'login',
+        query: { redirect: to.fullPath },
+      }
+    }
+  }
+
+  if (isPublic) return true
+  return true
 })
 
 router.afterEach(to => {

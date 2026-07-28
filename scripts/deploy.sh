@@ -130,22 +130,30 @@ log "Ensuring remote directory exists"
 log "Syncing project files to VPS"
 "${RSYNC[@]}" ./ "${DEPLOY_SSH}:${DEPLOY_PATH}/"
 
+# Quote values for Docker Compose .env (keeps # ! @ $ & etc. intact)
+env_quote() {
+  local v=${1-}
+  v=${v//\\/\\\\}
+  v=${v//\"/\\\"}
+  v=${v//\$/\\$}
+  printf '"%s"' "$v"
+}
+
 log "Writing remote .env (production)"
-# Build remote env without shipping local laptop secrets accidentally from other files.
 REMOTE_ENV="$(cat <<EOF
-VITE_DIRECTUS_URL=${PUBLIC_URL}
+VITE_DIRECTUS_URL=$(env_quote "$PUBLIC_URL")
 VITE_USE_MOCK=false
-PUBLIC_URL=${PUBLIC_URL}
-DIRECTUS_PORT=${DIRECTUS_PORT}
-CORS_ORIGIN=${CORS_ORIGIN}
-DIRECTUS_SECRET=${DIRECTUS_SECRET}
-ADMIN_EMAIL=${ADMIN_EMAIL}
-ADMIN_PASSWORD=${ADMIN_PASSWORD}
-DB_HOST=${DB_HOST}
-DB_PORT=${DB_PORT}
-DB_USER=${DB_USER}
-DB_PASSWORD=${DB_PASSWORD}
-DB_DATABASE=${DB_DATABASE}
+PUBLIC_URL=$(env_quote "$PUBLIC_URL")
+DIRECTUS_PORT=$(env_quote "$DIRECTUS_PORT")
+CORS_ORIGIN=$(env_quote "$CORS_ORIGIN")
+DIRECTUS_SECRET=$(env_quote "$DIRECTUS_SECRET")
+ADMIN_EMAIL=$(env_quote "$ADMIN_EMAIL")
+ADMIN_PASSWORD=$(env_quote "$ADMIN_PASSWORD")
+DB_HOST=$(env_quote "$DB_HOST")
+DB_PORT=$(env_quote "$DB_PORT")
+DB_USER=$(env_quote "$DB_USER")
+DB_PASSWORD=$(env_quote "$DB_PASSWORD")
+DB_DATABASE=$(env_quote "$DB_DATABASE")
 EOF
 )"
 "${SSH[@]}" "cat > $(printf '%q' "$DEPLOY_PATH")/.env" <<<"$REMOTE_ENV"

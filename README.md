@@ -25,7 +25,11 @@ npm run directus:bootstrap
 
 Default admin: `admin@example.com` / `admin123` (change in `.env`).
 
-Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.
+Frontend base path: **`/raca-comercial/`** (see `vite.config.mts`).  
+Dev URL: http://localhost:3000/raca-comercial/
+
+Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.  
+With Directus mode, the app requires **login** at `/raca-comercial/login` using a Directus user.
 
 ## Local frontend + Docker backend
 
@@ -55,10 +59,18 @@ npm run dev
 
 Bootstrap creates collections used by `src/api/directus.ts`:
 
-- `vendedores`, `clientes`, `historico_faturamento`, `movimentacoes`
+- `vendedores`, `clientes` (+ `codigo`), `historico_faturamento`, `movimentacoes`
 - `insights`, `recomendacoes`, `alertas`
-- `dashboard_kpis` (singleton), `ai_modules`, `ctes`
+- `dashboard_kpis` (singleton), `ai_modules`, `ctes` (+ `chave`), `importacoes`
 - `chat_conversations`, `chat_messages` (Analista)
+
+After schema changes, re-run:
+
+```bash
+npm run directus:bootstrap
+# or against production:
+DIRECTUS_URL=https://api-raca-comercial.soultech.solutions npm run directus:bootstrap
+```
 
 ## Analista Comercial (Claude)
 
@@ -73,6 +85,21 @@ docker compose restart directus
 - Spec: [`docs/ENDPOINT_CHAT.md`](docs/ENDPOINT_CHAT.md)
 - Health: `GET /analista-comercial/health`
 - Ask: `POST /analista-comercial/ask` (Bearer token Directus)
+
+## XLSX import → Directus
+
+With `VITE_USE_MOCK=false` and a write token, **Base de Dados → Upload** parses LOG FALA, runs `cteAnalytics` (REGRAS_NEGOCIO), and batch-syncs into Directus.
+
+1. In Directus Admin → **Settings → Access Tokens**, create a static token (Admin).
+2. Set in `.env` / frontend env:
+
+```env
+VITE_USE_MOCK=false
+VITE_DIRECTUS_URL=https://api-raca-comercial.soultech.solutions
+VITE_DIRECTUS_TOKEN=your_static_token
+```
+
+3. Upload the Excel in the app — progress shows clear/create batches for `ctes`, `clientes`, KPIs, etc.
 
 ## Production deploy (API)
 
@@ -91,10 +118,15 @@ cp .env.production.example .env.production
 
 This syncs the repo to the VPS and starts **Directus + Redis** there. It does **not** start Postgres — set `DB_*` to your existing database.
 
-Point reverse proxy (TLS) at `127.0.0.1:8055` on the VPS.
+Point reverse proxy (TLS) at `127.0.0.1:8083` on the VPS (or your `DIRECTUS_PORT`).
+
+## Project structure
 
 - `src/main.ts` — app entry
 - `src/api/directus.ts` — Directus API client (mock toggle via `VITE_USE_MOCK`)
+- `src/services/cteParser.ts` — Excel → CT-es
+- `src/services/cteAnalytics.ts` — KPIs / alerts per REGRAS_NEGOCIO
+- `src/services/directusSync.ts` — batch sync after import
 - `docker-compose.yml` — full local stack
 - `scripts/bootstrap-directus.mjs` — schema bootstrap
 - `directus/` — uploads, extensions, snapshots volumes
