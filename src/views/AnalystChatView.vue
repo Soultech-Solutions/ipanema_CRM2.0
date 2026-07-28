@@ -1,7 +1,14 @@
 <script lang="ts" setup>
+  import DOMPurify from 'dompurify'
+  import { marked } from 'marked'
   import { nextTick, onMounted, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
   import { useAnalystStore } from '@/stores/analyst'
+
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  })
 
   const store = useAnalystStore()
   const router = useRouter()
@@ -41,16 +48,12 @@
     if (route) router.push(route)
   }
 
-  /** Renderiza markdown leve (**bold** e quebras de linha) */
+  /** Renderiza markdown (títulos, listas, negrito, etc.) de forma segura */
   function formatContent (text: string): string {
-    const escaped = text
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-    return escaped
-      .replaceAll(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replaceAll(/_(.+?)_/g, '<em>$1</em>')
-      .replaceAll('\n', '<br>')
+    const html = marked.parse(text, { async: false }) as string
+    return DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
+    })
   }
 </script>
 
@@ -281,8 +284,98 @@
   border-color: rgb(var(--v-theme-error)) !important;
 }
 
+.msg__content :deep(p) {
+  margin: 0 0 0.65em;
+}
+
+.msg__content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.msg__content :deep(h1),
+.msg__content :deep(h2),
+.msg__content :deep(h3),
+.msg__content :deep(h4) {
+  margin: 0.85em 0 0.4em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.msg__content :deep(h1) { font-size: 1.2rem; }
+.msg__content :deep(h2) { font-size: 1.1rem; }
+.msg__content :deep(h3),
+.msg__content :deep(h4) { font-size: 1rem; }
+
+.msg__content :deep(h1:first-child),
+.msg__content :deep(h2:first-child),
+.msg__content :deep(h3:first-child),
+.msg__content :deep(h4:first-child) {
+  margin-top: 0;
+}
+
+.msg__content :deep(ul),
+.msg__content :deep(ol) {
+  margin: 0.4em 0 0.75em;
+  padding-left: 1.35em;
+}
+
+.msg__content :deep(li) {
+  margin: 0.2em 0;
+}
+
+.msg__content :deep(li > p) {
+  margin: 0;
+}
+
 .msg__content :deep(strong) {
   font-weight: 700;
+}
+
+.msg__content :deep(em) {
+  font-style: italic;
+}
+
+.msg__content :deep(code) {
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.msg--user .msg__content :deep(code) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.msg__content :deep(pre) {
+  margin: 0.5em 0;
+  padding: 0.75em 0.9em;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: rgba(var(--v-theme-on-surface), 0.06);
+}
+
+.msg__content :deep(pre code) {
+  padding: 0;
+  background: transparent;
+}
+
+.msg__content :deep(blockquote) {
+  margin: 0.5em 0;
+  padding-left: 0.85em;
+  border-left: 3px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgba(var(--v-theme-on-surface), 0.75);
+}
+
+.msg__content :deep(a) {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.msg__content :deep(hr) {
+  margin: 0.85em 0;
+  border: 0;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .msg__sources {

@@ -106,7 +106,8 @@ done
 RSYNC=(rsync -az --delete -e "$RSYNC_RSH"
   --exclude '.git/'
   --exclude 'node_modules/'
-  --exclude 'dist/'
+  # Only skip the Vue app build output — keep extension dist/ (e.g. analista-comercial)
+  --exclude '/dist/'
   --exclude '.env'
   --exclude '.env.*'
   --exclude '!.env.production.example'
@@ -154,6 +155,11 @@ DB_PORT=$(env_quote "$DB_PORT")
 DB_USER=$(env_quote "$DB_USER")
 DB_PASSWORD=$(env_quote "$DB_PASSWORD")
 DB_DATABASE=$(env_quote "$DB_DATABASE")
+ANTHROPIC_API_KEY=$(env_quote "${ANTHROPIC_API_KEY:-}")
+ANTHROPIC_MODEL=$(env_quote "${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}")
+ANTHROPIC_MAX_TOKENS=$(env_quote "${ANTHROPIC_MAX_TOKENS:-2048}")
+ANALISTA_MAX_TOOL_ROUNDS=$(env_quote "${ANALISTA_MAX_TOOL_ROUNDS:-6}")
+ANALISTA_ENABLED=$(env_quote "${ANALISTA_ENABLED:-true}")
 EOF
 )"
 "${SSH[@]}" "cat > $(printf '%q' "$DEPLOY_PATH")/.env" <<<"$REMOTE_ENV"
