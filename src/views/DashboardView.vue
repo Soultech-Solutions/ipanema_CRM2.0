@@ -137,29 +137,7 @@
         </v-col>
       </v-row>
 
-      <!-- Flow strip -->
-      <v-card class="mb-6 mt-4" color="primary" rounded="lg" variant="tonal">
-        <v-card-text class="py-3">
-          <div class="d-flex flex-wrap justify-space-around ga-4 text-center">
-            <div
-              v-for="step in [
-                { icon: 'mdi-database', label: 'Dados', desc: 'Consolidação e qualidade' },
-                { icon: 'mdi-brain', label: 'IA', desc: 'Modelos preditivos' },
-                { icon: 'mdi-magnify', label: 'Diagnóstico', desc: 'Riscos e oportunidades' },
-                { icon: 'mdi-target', label: 'Ação comercial', desc: 'Planos de alto impacto' },
-              ]"
-              :key="step.label"
-              class="px-2"
-            >
-              <v-icon class="mb-1" size="22">{{ step.icon }}</v-icon>
-              <div class="text-subtitle-2 font-weight-bold">{{ step.label }}</div>
-              <div class="text-caption text-medium-emphasis">{{ step.desc }}</div>
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <v-row>
+      <v-row class="mt-4">
         <!-- Recomendações prioritárias -->
         <v-col cols="12" lg="6">
           <v-card class="h-100" rounded="lg" variant="outlined">
@@ -275,26 +253,6 @@
                 </tr>
               </tbody>
             </v-table>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Benefits footer -->
-      <v-row class="mt-4" density="compact">
-        <v-col
-          v-for="benefit in [
-            { icon: 'mdi-chart-line', label: 'Mais previsibilidade' },
-            { icon: 'mdi-shield-check', label: 'Menor risco' },
-            { icon: 'mdi-account-multiple-plus', label: 'Expansão da carteira' },
-            { icon: 'mdi-target', label: 'Melhor tomada de decisão' },
-          ]"
-          :key="benefit.label"
-          cols="6"
-          md="3"
-        >
-          <v-card class="text-center pa-4" color="primary" rounded="lg" variant="tonal">
-            <v-icon class="mb-2" size="28">{{ benefit.icon }}</v-icon>
-            <div class="text-body-2 font-weight-medium">{{ benefit.label }}</div>
           </v-card>
         </v-col>
       </v-row>
