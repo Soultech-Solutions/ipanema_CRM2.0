@@ -18,8 +18,16 @@ function str (value: unknown, fallback = ''): string {
   return value == null ? fallback : String(value)
 }
 
+function errMsg (error: unknown): string {
+  if (error instanceof Error) return error.message
+  return String(error)
+}
+
 export class ContextRepository {
-  constructor (private items: ItemsServiceFactory) {}
+  constructor (
+    private items: ItemsServiceFactory,
+    private log?: { warn?: (...args: unknown[]) => void },
+  ) {}
 
   async getBaseline (clienteId?: string): Promise<BaselineContext> {
     const notes: string[] = []
@@ -89,12 +97,11 @@ export class ContextRepository {
 
       const rows = await this.items('recomendacoes').readByQuery({
         filter: Object.keys(filter).length ? filter : undefined,
-        sort: ['-impactoEstimado', '-date_created'],
+        sort: ['-impactoEstimado', '-createdAt'],
         limit: Math.min(input.limit ?? 10, 20),
         fields: [
-          'id', 'titulo', 'prioridade', 'status', 'acao', 'regiao',
-          'clienteId', 'cliente_id', 'clienteNome', 'cliente_nome',
-          'impactoEstimado', 'impacto_estimado',
+          'id', 'titulo', 'prioridade', 'status', 'acao',
+          'clienteId', 'clienteNome', 'impactoEstimado',
         ],
       })
 
@@ -104,15 +111,15 @@ export class ContextRepository {
           id: str(r.id),
           titulo: str(r.titulo),
           prioridade: str(r.prioridade),
-          clienteId: str(r.cliente_id || r.clienteId),
-          clienteNome: str(r.cliente_nome || r.clienteNome),
-          regiao: str(r.regiao) || undefined,
+          clienteId: str(r.clienteId),
+          clienteNome: str(r.clienteNome),
           acao: str(r.acao),
-          impactoEstimado: num(r.impacto_estimado ?? r.impactoEstimado),
+          impactoEstimado: num(r.impactoEstimado),
           status: str(r.status),
         }
       })
-    } catch {
+    } catch (error) {
+      this.log?.warn?.('[analista] recomendacoes query failed', errMsg(error))
       notes.push('Collection recomendacoes indisponível')
       return []
     }
@@ -120,9 +127,9 @@ export class ContextRepository {
 
   private async safeReadKpis (notes: string[]): Promise<BaselineKpis | null> {
     try {
+      // dashboard_kpis is a singleton with snake_case fields (no date_created)
       const rows = await this.items('dashboard_kpis').readByQuery({
         limit: 1,
-        sort: ['-date_updated', '-date_created'],
         fields: [
           'saude_carteira',
           'receita_em_risco',
@@ -130,28 +137,23 @@ export class ContextRepository {
           'eficiencia_comercial',
           'crescimento_sustentavel',
           'cii',
-          // camelCase fallbacks if bootstrap used JS names
-          'saudeCarteira',
-          'receitaEmRisco',
-          'receitaPotencial',
-          'eficienciaComercial',
-          'crescimentoSustentavel',
         ],
       })
-      const row = asRecord(rows[0])
-      if (!rows[0]) {
+      const row = asRecord(rows[0] ?? rows)
+      if (!rows[0] && !('cii' in row || 'saude_carteira' in row)) {
         notes.push('Nenhum registro em dashboard_kpis')
         return null
       }
       return {
-        saudeCarteira: num(row.saude_carteira ?? row.saudeCarteira),
-        receitaEmRisco: num(row.receita_em_risco ?? row.receitaEmRisco),
-        receitaPotencial: num(row.receita_potencial ?? row.receitaPotencial),
-        eficienciaComercial: num(row.eficiencia_comercial ?? row.eficienciaComercial),
-        crescimentoSustentavel: num(row.crescimento_sustentavel ?? row.crescimentoSustentavel),
+        saudeCarteira: num(row.saude_carteira),
+        receitaEmRisco: num(row.receita_em_risco),
+        receitaPotencial: num(row.receita_potencial),
+        eficienciaComercial: num(row.eficiencia_comercial),
+        crescimentoSustentavel: num(row.crescimento_sustentavel),
         cii: num(row.cii),
       }
-    } catch {
+    } catch (error) {
+      this.log?.warn?.('[analista] dashboard_kpis query failed', errMsg(error))
       notes.push('Collection dashboard_kpis indisponível')
       return null
     }
@@ -170,12 +172,13 @@ export class ContextRepository {
       if (input.query) {
         filter._or = [
           { nome: { _icontains: input.query } },
-          { id: { _icontains: input.query } },
+          { codigo: { _icontains: input.query } },
         ]
       }
       if (input.status) filter.status = { _eq: input.status }
-      if (input.regiao) filter.regiao = { _icontains: input.regiao }
+      // `regiao` is not a field on clientes — ignore if the model sends it
 
+      // Schema uses camelCase field names
       const orderMap: Record<string, string> = {
         receita_em_risco: 'receitaEmRisco',
         receita_potencial: 'receitaPotencial',
@@ -190,12 +193,12 @@ export class ContextRepository {
         sort: [`${dir}${orderBy}`],
         limit: Math.min(input.limit ?? 10, 20),
         fields: [
-          'id', 'nome', 'regiao', 'status',
-          'health_score', 'healthScore',
-          'receita_em_risco', 'receitaEmRisco',
-          'receita_potencial', 'receitaPotencial',
-          'probabilidade_perda', 'probabilidadePerda',
-          'dias_sem_embarque', 'diasSemEmbarque',
+          'id', 'codigo', 'nome', 'status',
+          'healthScore',
+          'receitaEmRisco',
+          'receitaPotencial',
+          'probabilidadePerda',
+          'diasSemEmbarque',
         ],
       })
 
@@ -204,16 +207,16 @@ export class ContextRepository {
         return {
           id: str(r.id),
           nome: str(r.nome),
-          regiao: str(r.regiao) || undefined,
           status: str(r.status) || undefined,
-          healthScore: num(r.health_score ?? r.healthScore),
-          receitaEmRisco: num(r.receita_em_risco ?? r.receitaEmRisco),
-          receitaPotencial: num(r.receita_potencial ?? r.receitaPotencial),
-          probabilidadePerda: num(r.probabilidade_perda ?? r.probabilidadePerda),
-          diasSemEmbarque: num(r.dias_sem_embarque ?? r.diasSemEmbarque),
+          healthScore: num(r.healthScore),
+          receitaEmRisco: num(r.receitaEmRisco),
+          receitaPotencial: num(r.receitaPotencial),
+          probabilidadePerda: num(r.probabilidadePerda),
+          diasSemEmbarque: num(r.diasSemEmbarque),
         }
       })
-    } catch {
+    } catch (error) {
+      this.log?.warn?.('[analista] clientes query failed', errMsg(error))
       notes.push('Collection clientes indisponível')
       return []
     }
@@ -223,7 +226,8 @@ export class ContextRepository {
     try {
       const row = await this.items('clientes').readOne(clienteId)
       return asRecord(row)
-    } catch {
+    } catch (error) {
+      this.log?.warn?.('[analista] get client failed', errMsg(error))
       notes.push(`Cliente ${clienteId} não encontrado`)
       return null
     }
@@ -236,7 +240,7 @@ export class ContextRepository {
 
       const rows = await this.items('alertas').readByQuery({
         filter: Object.keys(filter).length ? filter : undefined,
-        sort: ['-date_created'],
+        sort: ['-createdAt'],
         limit: Math.min(input.limit ?? 10, 20),
         fields: ['id', 'titulo', 'severidade', 'clienteId', 'clienteNome', 'lido'],
       })
@@ -247,11 +251,12 @@ export class ContextRepository {
           id: str(r.id),
           titulo: str(r.titulo),
           severidade: str(r.severidade),
-          clienteId: str(r.clienteId || r.cliente_id) || undefined,
-          clienteNome: str(r.clienteNome || r.cliente_nome) || undefined,
+          clienteId: str(r.clienteId) || undefined,
+          clienteNome: str(r.clienteNome) || undefined,
         }
       })
-    } catch {
+    } catch (error) {
+      this.log?.warn?.('[analista] alertas query failed', errMsg(error))
       notes.push('Collection alertas indisponível')
       return []
     }

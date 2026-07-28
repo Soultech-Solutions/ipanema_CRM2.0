@@ -12,7 +12,7 @@
     <v-card-text class="pa-6 position-relative">
       <div class="d-flex align-center justify-space-between mb-2">
         <div class="text-caption text-uppercase cii-card__eyebrow">
-          Commercial Intelligence Index
+          Índice de Inteligência Comercial
         </div>
 
         <v-icon color="#EB1823" size="22">mdi-crown</v-icon>

@@ -44,7 +44,7 @@ export class AskAnalystUseCase {
       accountability: null,
     })
 
-    const contextRepo = new ContextRepository(itemsFactory)
+    const contextRepo = new ContextRepository(itemsFactory, this.ctx.logger)
     const conversationRepo = new ConversationRepository(itemsFactory)
     const toolExecutor = new ToolExecutor(contextRepo)
     const llm = new AnthropicClient({

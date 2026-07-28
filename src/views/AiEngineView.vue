@@ -94,7 +94,7 @@
         <v-card rounded="lg" variant="outlined">
           <v-card-item>
             <v-card-title class="text-subtitle-1 font-weight-bold">
-              Commercial Intelligence Index — composição
+              Índice de Inteligência Comercial — composição
             </v-card-title>
 
             <v-card-subtitle>

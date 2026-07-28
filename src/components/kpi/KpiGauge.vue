@@ -9,12 +9,14 @@
     max?: number
     suffix?: string
     numeric?: boolean
+    tooltip?: string
   }>(), {
     icon: 'mdi-chart-arc',
     color: '#1E88E5',
     max: 100,
     suffix: '',
     numeric: true,
+    tooltip: undefined,
   })
 
   const numericValue = computed(() => {
@@ -63,49 +65,69 @@
 </script>
 
 <template>
-  <div class="kpi-gauge">
-    <div class="kpi-gauge__ring">
-      <svg class="kpi-gauge__svg" viewBox="0 0 140 120" aria-hidden="true">
-        <path
-          class="kpi-gauge__track"
-          d="M 20 100 A 54 54 0 1 1 120 100"
-          fill="none"
-          stroke-linecap="round"
-          stroke-width="10"
-        />
+  <v-tooltip
+    :disabled="!tooltip"
+    location="top"
+    max-width="280"
+    open-delay="200"
+  >
+    <template #activator="{ props: tipProps }">
+      <div class="kpi-gauge" v-bind="tipProps">
+        <div class="kpi-gauge__ring">
+          <svg class="kpi-gauge__svg" viewBox="0 0 140 120" aria-hidden="true">
+            <path
+              class="kpi-gauge__track"
+              d="M 20 100 A 54 54 0 1 1 120 100"
+              fill="none"
+              stroke-linecap="round"
+              stroke-width="10"
+            />
 
-        <path
-          class="kpi-gauge__value"
-          d="M 20 100 A 54 54 0 1 1 120 100"
-          fill="none"
-          :stroke="color"
-          :stroke-dasharray="`${arcLength} ${circumference}`"
-          :stroke-dashoffset="dashOffset"
-          stroke-linecap="round"
-          stroke-width="10"
-        />
-      </svg>
+            <path
+              class="kpi-gauge__value"
+              d="M 20 100 A 54 54 0 1 1 120 100"
+              fill="none"
+              :stroke="color"
+              :stroke-dasharray="`${arcLength} ${circumference}`"
+              :stroke-dashoffset="dashOffset"
+              stroke-linecap="round"
+              stroke-width="10"
+            />
+          </svg>
 
-      <div class="kpi-gauge__center">
-        <v-icon class="kpi-gauge__icon" :color="color" size="16">{{ icon }}</v-icon>
+          <div class="kpi-gauge__center">
+            <v-icon class="kpi-gauge__icon" :color="color" size="16">{{ icon }}</v-icon>
 
-        <div class="kpi-gauge__value-block">
-          <span
-            v-if="parts.prefix"
-            class="kpi-gauge__prefix"
-            :style="{ color }"
+            <div class="kpi-gauge__value-block">
+              <span
+                v-if="parts.prefix"
+                class="kpi-gauge__prefix"
+                :style="{ color }"
+              >
+                {{ parts.prefix }}
+              </span>
+              <span class="kpi-gauge__value-text" :style="mainStyle">
+                {{ parts.main }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-gauge__label">
+          {{ label }}
+          <v-icon
+            v-if="tooltip"
+            class="kpi-gauge__hint"
+            size="14"
           >
-            {{ parts.prefix }}
-          </span>
-          <span class="kpi-gauge__value-text" :style="mainStyle">
-            {{ parts.main }}
-          </span>
+            mdi-information-outline
+          </v-icon>
         </div>
       </div>
-    </div>
+    </template>
 
-    <div class="kpi-gauge__label">{{ label }}</div>
-  </div>
+    <div class="kpi-gauge__tooltip">{{ tooltip }}</div>
+  </v-tooltip>
 </template>
 
 <style scoped>
@@ -116,6 +138,7 @@
   padding: 8px 4px 12px;
   min-width: 0;
   width: 100%;
+  cursor: default;
 }
 
 .kpi-gauge__ring {
@@ -191,5 +214,20 @@
   max-width: 160px;
   line-height: 1.25;
   padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.kpi-gauge__hint {
+  opacity: 0.55;
+  flex-shrink: 0;
+}
+
+.kpi-gauge__tooltip {
+  white-space: pre-line;
+  font-size: 0.8125rem;
+  line-height: 1.4;
 }
 </style>

@@ -74,6 +74,7 @@
                 color="#43A047"
                 icon="mdi-heart-pulse"
                 label="Saúde da Carteira"
+                tooltip="A carteira está saudável ou caminhando para uma perda de receita?"
                 :value="store.kpis.saudeCarteira"
               />
             </v-col>
@@ -82,8 +83,9 @@
               <KpiGauge
                 color="#FB8C00"
                 icon="mdi-alert"
-                label="Receita em Risco"
+                label="Índice de Receita em Risco"
                 :numeric="false"
+                tooltip="Quanto da receita pode ser perdida?"
                 :value="formatCurrency(store.kpis.receitaEmRisco, true)"
               />
             </v-col>
@@ -92,8 +94,9 @@
               <KpiGauge
                 color="#1E88E5"
                 icon="mdi-chart-timeline-variant-shimmer"
-                label="Receita Potencial"
+                label="Índice de Receita Potencial"
                 :numeric="false"
+                tooltip="Quanto dinheiro ainda existe dentro da carteira?"
                 :value="formatCurrency(store.kpis.receitaPotencial, true)"
               />
             </v-col>
@@ -102,7 +105,9 @@
               <KpiGauge
                 color="#1565C0"
                 icon="mdi-star-four-points"
-                label="Eficiência Comercial"
+                label="Índice de Eficiência Comercial"
+                tooltip="O time comercial está usando bem seu tempo?
+(Receita por vendedor / Conversão / Tempo médio entre embarques / Recuperação de clientes / Crescimento líquido da carteira)"
                 :value="store.kpis.eficienciaComercial"
               />
             </v-col>
@@ -111,7 +116,9 @@
               <KpiGauge
                 color="#2E7D32"
                 icon="mdi-leaf"
-                label="Crescimento Sustentável"
+                label="Índice de Crescimento Sustentável"
+                tooltip="Estamos crescendo com qualidade?
+(Crescimento do faturamento / Crescimento do Yield / Crescimento da margem / Retenção / Qualidade operacional)"
                 :value="store.kpis.crescimentoSustentavel"
               />
             </v-col>
