@@ -463,6 +463,39 @@ async function bootstrap () {
       ],
     },
     {
+      collection: 'chat_conversations',
+      meta: { icon: 'forum', note: 'Conversas do Analista Comercial' },
+      fields: [
+        stringField('title', { width: 'full' }),
+        selectField('status', ['active', 'archived'], { default: 'active', required: true }),
+      ],
+    },
+    {
+      collection: 'chat_messages',
+      meta: { icon: 'chat', note: 'Mensagens do Analista Comercial', hidden: true },
+      fields: [
+        m2oField('conversation', { required: true }),
+        selectField('role', ['user', 'assistant', 'system'], { required: true }),
+        textField('content', { required: true }),
+        {
+          field: 'sources',
+          type: 'json',
+          meta: { interface: 'input-code', special: ['cast-json'], width: 'full' },
+          schema: { is_nullable: true },
+        },
+        {
+          field: 'suggested_actions',
+          type: 'json',
+          meta: { interface: 'input-code', special: ['cast-json'], width: 'full' },
+          schema: { is_nullable: true },
+        },
+        stringField('model'),
+        integerField('latency_ms'),
+        integerField('token_input'),
+        integerField('token_output'),
+      ],
+    },
+    {
       collection: 'ctes',
       meta: { icon: 'local_shipping', note: 'Base de CT-es (grain: 1 linha = 1 CT-e)' },
       fields: [
@@ -596,10 +629,32 @@ async function bootstrap () {
     meta: { sort_field: null },
     schema: { on_delete: 'SET NULL' },
   })
+  await createRelation(token, {
+    collection: 'chat_messages',
+    field: 'conversation',
+    related_collection: 'chat_conversations',
+    meta: { one_field: 'messages', sort_field: null },
+    schema: { on_delete: 'CASCADE' },
+  })
 
-  const publicCollections = definitions.map(d => d.collection)
+  // Chat is private — do not expose to Public role
+  const publicCollections = definitions
+    .map(d => d.collection)
+    .filter(c => !c.startsWith('chat_'))
   console.log('• grant Public read on collections')
   await ensurePublicRead(token, publicCollections)
+
+  // O2M alias for conversation → messages
+  console.log('• ensure chat relation fields')
+  await createField(token, 'chat_conversations', {
+    field: 'messages',
+    type: 'alias',
+    meta: {
+      interface: 'list-o2m',
+      special: ['o2m'],
+      options: { template: '{{role}}: {{content}}' },
+    },
+  })
 
   console.log('\nBootstrap complete.')
   console.log(`Admin UI: ${DIRECTUS_URL}`)

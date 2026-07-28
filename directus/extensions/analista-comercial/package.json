@@ -1,0 +1,30 @@
+{
+  "name": "analista-comercial",
+  "version": "1.0.0",
+  "description": "Endpoint de chat do Analista Comercial (Claude + Directus)",
+  "type": "module",
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-extension-endpoint",
+    "analista-comercial"
+  ],
+  "directus:extension": {
+    "type": "endpoint",
+    "path": "dist/index.js",
+    "source": "src/index.ts",
+    "host": "^11.0.0"
+  },
+  "scripts": {
+    "build": "directus-extension build",
+    "dev": "directus-extension build -w --no-minify"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@directus/extensions-sdk": "^13.0.0",
+    "typescript": "^5.8.0"
+  }
+}

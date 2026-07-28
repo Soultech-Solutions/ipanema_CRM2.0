@@ -4,7 +4,7 @@ import { computed, ref, shallowRef } from 'vue'
 import type { AnalyticsResult, ImportStats } from '@/services/cteAnalytics'
 import { parseAndAnalyzeInWorker } from '@/services/importRunner'
 
-const STORAGE_KEY = 'raca_comercial_analytics_v2'
+const STORAGE_KEY = 'raca_comercial_analytics_v3'
 const SEED_JSON_URL = '/data/analytics-seed.json'
 const SEED_XLSX_URL = '/data/base-fat-raca.xlsx'
 
@@ -213,6 +213,7 @@ export const useCommercialStore = defineStore('commercial', () => {
   function clearCache () {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem('raca_comercial_analytics_v1')
+    localStorage.removeItem('raca_comercial_analytics_v2')
     clients.value = []
     dashboard.value = null
     stats.value = null

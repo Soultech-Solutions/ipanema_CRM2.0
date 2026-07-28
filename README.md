@@ -47,6 +47,8 @@ npm run dev
 | `npm run docker:down` | Stop stack |
 | `npm run docker:logs` | Follow compose logs |
 | `npm run directus:bootstrap` | Create Directus collections |
+| `npm run extension:install` | Install Analista Comercial extension deps |
+| `npm run extension:build` | Build `POST /analista-comercial/ask` endpoint |
 | `npm run directus:snapshot` | Export schema snapshot |
 
 ## Directus collections
@@ -56,6 +58,21 @@ Bootstrap creates collections used by `src/api/directus.ts`:
 - `vendedores`, `clientes`, `historico_faturamento`, `movimentacoes`
 - `insights`, `recomendacoes`, `alertas`
 - `dashboard_kpis` (singleton), `ai_modules`, `ctes`
+- `chat_conversations`, `chat_messages` (Analista)
+
+## Analista Comercial (Claude)
+
+Extension em `directus/extensions/analista-comercial`:
+
+```bash
+# .env → ANTHROPIC_API_KEY=sk-ant-...
+npm run extension:build
+docker compose restart directus
+```
+
+- Spec: [`docs/ENDPOINT_CHAT.md`](docs/ENDPOINT_CHAT.md)
+- Health: `GET /analista-comercial/health`
+- Ask: `POST /analista-comercial/ask` (Bearer token Directus)
 
 ## Production deploy (API)
 

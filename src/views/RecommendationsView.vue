@@ -68,7 +68,9 @@
             </v-card-title>
 
             <v-card-subtitle>
-              {{ rec.clienteNome || 'Carteira geral' }} · {{ formatDate(rec.createdAt) }}
+              {{ rec.clienteNome || 'Carteira geral' }}
+              <template v-if="rec.regiao"> · {{ rec.regiao }}</template>
+              · {{ formatDate(rec.createdAt) }}
             </v-card-subtitle>
 
             <template #append>
@@ -87,6 +89,15 @@
             <p class="text-body-2 mb-3">{{ rec.descricao }}</p>
 
             <div class="d-flex flex-wrap align-center ga-2">
+              <v-chip
+                v-if="rec.regiao"
+                prepend-icon="mdi-map-marker"
+                size="small"
+                variant="tonal"
+              >
+                {{ rec.regiao }}
+              </v-chip>
+
               <v-chip color="primary" prepend-icon="mdi-flash" size="small" variant="tonal">
                 {{ rec.acao }}
               </v-chip>

@@ -28,6 +28,8 @@ export interface Recommendation {
   status: RecommendationStatus
   clienteId?: string
   clienteNome?: string
+  /** Região predominante do cliente (campo REGIÃO da base) */
+  regiao?: string
   acao: string
   impactoEstimado?: number
   createdAt: string
@@ -52,6 +54,8 @@ export interface Client {
   /** Proxy de segmento: CLASSIFICAÇÃO predominante ou GRUPO CLIENTE */
   segmento: string
   grupoCliente?: string
+  /** Região predominante (moda de REGIÃO nos CT-es) */
+  regiao?: string
   vendedorId: string
   vendedorNome: string
   healthScore: number

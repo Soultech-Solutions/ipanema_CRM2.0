@@ -16,6 +16,8 @@
     "docker:logs": "docker compose logs -f",
     "docker:backend": "docker compose --profile local-db up -d database cache directus",
     "directus:bootstrap": "node scripts/bootstrap-directus.mjs",
+    "extension:install": "npm --prefix directus/extensions/analista-comercial install",
+    "extension:build": "npm --prefix directus/extensions/analista-comercial run build",
     "seed:analytics": "vite-node scripts/build-analytics-seed.ts",
     "directus:snapshot": "docker compose exec directus npx directus schema snapshot ./snapshots/snapshot.yaml",
     "deploy": "bash scripts/deploy.sh --env-file .env.production",

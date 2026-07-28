@@ -484,7 +484,51 @@ Por cliente (detalhe):
 
 ---
 
-## 15. Roadmap de regras (pós-POC)
+## 15. Endpoint Analista Comercial (chat)
+
+Interface front: rota `/analista` (`AnalystChatView`).
+
+Especificação completa de implementação (Directus + Anthropic Claude):  
+→ [`docs/ENDPOINT_CHAT.md`](./ENDPOINT_CHAT.md)
+
+### Contrato
+
+`POST /analista-comercial/ask`
+
+```json
+{
+  "question": "Quais clientes possuem maior risco de perda?",
+  "conversationId": "opcional-uuid",
+  "context": { "clienteId": "opcional" }
+}
+```
+
+Resposta:
+
+```json
+{
+  "answer": "texto markdown leve",
+  "conversationId": "uuid",
+  "sources": [{ "type": "cliente", "id": "cli-…", "label": "CLIENTE 83347" }],
+  "suggestedActions": [{ "label": "Ver cliente", "route": "/clientes/cli-…" }],
+  "model": "claude-… | gpt-…",
+  "latencyMs": 1200
+}
+```
+
+### Fluxo esperado no Directus
+
+1. Receber pergunta autenticada  
+2. Montar contexto (KPIs, top clientes, alertas) a partir do banco  
+3. Chamar Claude/GPT com grounding  
+4. Opcional: tool/query SQL ou items Directus  
+5. Devolver `answer` + `sources` + ações  
+
+Enquanto o endpoint não existir, o front usa **fallback local** (`src/api/analyst.ts`) sobre a base carregada.
+
+---
+
+## 16. Roadmap de regras (pós-POC)
 
 1. Confirmar unidade de `PESO KG` com Raça  
 2. Peer group por segmento/grupo/rota  
@@ -493,11 +537,12 @@ Por cliente (detalhe):
 5. Integração vendedor + CRM (eficiência real)  
 6. CII com ~50 variáveis e pesos calibrados  
 7. Insights via LLM com grounding nos indicadores  
-8. Sync API ERP (substituir upload manual)
+8. Sync API ERP (substituir upload manual)  
+9. Endpoint `/analista-comercial/ask` (Claude/GPT + Directus)
 
 ---
 
-## 16. Referência de código (front atual)
+## 17. Referência de código (front atual)
 
 | Arquivo | Responsabilidade |
 |---------|------------------|
@@ -506,6 +551,8 @@ Por cliente (detalhe):
 | `src/services/cteAnalytics.ts` | Agregação, KPIs, alertas, recomendações |
 | `src/stores/commercial.ts` | Estado local / seed / import |
 | `src/api/directus.ts` | Switch local vs Directus |
+| `src/api/analyst.ts` | Chat → endpoint / fallback local |
+| `src/views/AnalystChatView.vue` | UI de interação |
 
 ---
 

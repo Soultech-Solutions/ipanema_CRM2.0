@@ -42,6 +42,7 @@ interface ClientAgg {
   nome: string
   grupoCliente: string
   classificacoes: Map<string, number>
+  regioes: Map<string, number>
   valorTotal: number
   count: number
   devolucoes: number
@@ -129,8 +130,8 @@ function monthLabel (key: string): string {
   return labels[idx] ?? key
 }
 
-function topKey (map: Map<string, number>): string {
-  let best = 'SEM CLASSIFICAÇÃO'
+function topKey (map: Map<string, number>, fallback = '—'): string {
+  let best = fallback
   let max = -1
   for (const [k, v] of map) {
     if (v > max) {
@@ -200,6 +201,7 @@ function buildAggs (ctes: CteDocument[]): {
         nome: cte.clienteCodigo,
         grupoCliente: cte.grupoCliente || '—',
         classificacoes: new Map(),
+        regioes: new Map(),
         valorTotal: 0,
         count: 0,
         devolucoes: 0,
@@ -223,6 +225,9 @@ function buildAggs (ctes: CteDocument[]): {
     if (cte.grupoCliente) agg.grupoCliente = cte.grupoCliente
     const classif = cte.classificacao || 'SEM CLASSIFICAÇÃO'
     agg.classificacoes.set(classif, (agg.classificacoes.get(classif) || 0) + 1)
+    if (cte.regiao) {
+      agg.regioes.set(cte.regiao, (agg.regioes.get(cte.regiao) || 0) + 1)
+    }
     if (devolucao) agg.devolucoes += 1
     if (reentrega) agg.reentregas += 1
     if (aberto) agg.ctesAbertos += 1
@@ -363,8 +368,9 @@ function aggToClient (agg: ClientAgg, now: number, peerAvg: number): Client {
     id: agg.id,
     nome: agg.nome,
     documento: `Grupo ${agg.grupoCliente}`,
-    segmento: topKey(agg.classificacoes),
+    segmento: topKey(agg.classificacoes, 'SEM CLASSIFICAÇÃO'),
     grupoCliente: agg.grupoCliente,
+    regiao: topKey(agg.regioes, '—'),
     vendedorId: 'ven-base',
     vendedorNome: 'Carteira (base CT-e)',
     healthScore,
@@ -455,14 +461,16 @@ function buildRecommendations (clients: Client[], importedAt: string): Recommend
   const recs: Recommendation[] = []
 
   for (const c of sorted.slice(0, 4)) {
+    const regiaoLabel = c.regiao && c.regiao !== '—' ? c.regiao : null
     recs.push({
       id: `rec-${c.id}-visita`,
       titulo: c.diasSemEmbarque >= 30 ? 'Recuperar cliente sem embarque' : 'Agendar visita estratégica',
-      descricao: `${c.nome}: Health ${c.healthScore}, ${c.diasSemEmbarque} dias sem embarque, risco de ${(c.probabilidadePerda * 100).toFixed(0)}%.`,
+      descricao: `${c.nome}${regiaoLabel ? ` · Região ${regiaoLabel}` : ''}: Health ${c.healthScore}, ${c.diasSemEmbarque} dias sem embarque, risco de ${(c.probabilidadePerda * 100).toFixed(0)}%.`,
       prioridade: c.healthScore < 70 || c.diasSemEmbarque >= 30 ? 'alta' : 'media',
       status: 'pendente',
       clienteId: c.id,
       clienteNome: c.nome,
+      regiao: regiaoLabel ?? undefined,
       acao: c.diasSemEmbarque >= 30 ? 'Recuperar cliente' : 'Agendar visita',
       impactoEstimado: c.receitaEmRisco,
       createdAt: importedAt,
@@ -471,14 +479,16 @@ function buildRecommendations (clients: Client[], importedAt: string): Recommend
 
   const lowYield = [...clients].filter(c => c.yieldMedio > 0).sort((a, b) => a.yieldMedio - b.yieldMedio)[0]
   if (lowYield) {
+    const regiaoLabel = lowYield.regiao && lowYield.regiao !== '—' ? lowYield.regiao : null
     recs.push({
       id: `rec-${lowYield.id}-tabela`,
       titulo: 'Renegociar tabela de frete',
-      descricao: `${lowYield.nome} com yield médio R$ ${lowYield.yieldMedio}/ton — abaixo do peer group.`,
+      descricao: `${lowYield.nome}${regiaoLabel ? ` · Região ${regiaoLabel}` : ''} com yield médio R$ ${lowYield.yieldMedio}/ton — abaixo do peer group.`,
       prioridade: 'media',
       status: 'pendente',
       clienteId: lowYield.id,
       clienteNome: lowYield.nome,
+      regiao: regiaoLabel ?? undefined,
       acao: 'Renegociar tabela',
       impactoEstimado: lowYield.receitaPotencial,
       createdAt: importedAt,

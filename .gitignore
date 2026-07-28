@@ -36,8 +36,20 @@ coverage
 # Directus runtime data
 directus/uploads/*
 !directus/uploads/.gitkeep
+
+# Ignore ad-hoc dumps; track only our custom endpoint source + built bundle
 directus/extensions/*
 !directus/extensions/.gitkeep
+!directus/extensions/analista-comercial/
+!directus/extensions/analista-comercial/**
+
+# Re-ignore deps (the `!**` above would otherwise re-include node_modules)
+directus/extensions/analista-comercial/node_modules/
+
+# Keep built bundle for Docker mount (global `dist` rule would hide it)
+!directus/extensions/analista-comercial/dist/
+!directus/extensions/analista-comercial/dist/**
+
 directus/snapshots/*.yaml
 directus/snapshots/*.yml
 !directus/snapshots/.gitkeep

@@ -14,6 +14,8 @@
 ## Docker
 - `npm run docker:up` — frontend + Directus + Postgres + Redis
 - `npm run docker:backend` — local Directus + Compose Postgres + Redis
-- `npm run directus:bootstrap` — create collections matching `src/api/directus.ts`
+- `npm run directus:bootstrap` — create collections matching `src/api/directus.ts` (+ chat)
+- `npm run extension:install` / `npm run extension:build` — Analista Comercial endpoint
 - `./scripts/deploy.sh --env-file .env.production` — SSH/rsync deploy Directus to the VPS
 - Admin UI: http://localhost:8055 (default `admin@example.com` / `admin123` in `.env`)
+- Chat endpoint: `POST /analista-comercial/ask` (needs `ANTHROPIC_API_KEY` in `.env`)

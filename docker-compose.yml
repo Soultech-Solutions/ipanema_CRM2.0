@@ -68,6 +68,12 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
       CORS_CREDENTIALS: 'true'
       WEBSOCKETS_ENABLED: 'true'
+      # Analista Comercial (extension endpoint)
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-4-5-20250929}
+      ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-2048}
+      ANALISTA_MAX_TOOL_ROUNDS: ${ANALISTA_MAX_TOOL_ROUNDS:-6}
+      ANALISTA_ENABLED: ${ANALISTA_ENABLED:-true}
 
   frontend:
     build:

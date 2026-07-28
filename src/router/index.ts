@@ -38,6 +38,12 @@ const router = createRouter({
           meta: { title: 'Detalhe do Cliente', icon: 'mdi-account' },
         },
         {
+          path: 'analista',
+          name: 'analyst',
+          component: () => import('@/views/AnalystChatView.vue'),
+          meta: { title: 'Analista Comercial', icon: 'mdi-robot-outline' },
+        },
+        {
           path: 'recomendacoes',
           name: 'recommendations',
           component: () => import('@/views/RecommendationsView.vue'),
