@@ -68,7 +68,8 @@ export type ParsedColumn =
   | { kind: 'annual'; tipo: 'cotado' | 'realizado'; key: string }
 
 /** Classifica um cabeçalho de coluna da planilha */
-export function parseColumnHeader (header: string): ParsedColumn | null {
+export function parseColumnHeader (headerRaw: string): ParsedColumn | null {
+  const header = headerRaw.trim()
   const fixed = BASE_COLUMN_MAP[header]
   if (fixed) return { kind: 'fixed', field: fixed }
 

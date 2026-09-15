@@ -67,10 +67,30 @@ export function parseBaseComercialWorkbook (buffer: ArrayBuffer): ClienteComerci
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: true })
   const sheetName = workbook.SheetNames[0]
   if (!sheetName) return []
+  const sheet = workbook.Sheets[sheetName]
 
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(workbook.Sheets[sheetName], {
+  // A planilha pode ter linhas em branco/título antes do cabeçalho de verdade.
+  // O SheetJS já ignora linhas totalmente vazias no início ao decidir onde a
+  // área usada da planilha começa (sheet['!ref']) — por isso calculamos o
+  // deslocamento a partir dali, em vez de um índice absoluto fixo.
+  const ref = sheet['!ref']
+  const startRow = ref ? XLSX.utils.decode_range(ref).s.r : 0
+
+  const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: null, raw: true })
+  let headerOffset = 0
+  for (let i = 0; i < Math.min(rawRows.length, 10); i++) {
+    const row = rawRows[i]
+    const hasKnownColumn = row.some(cell => typeof cell === 'string' && parseColumnHeader(cell))
+    if (hasKnownColumn) {
+      headerOffset = i
+      break
+    }
+  }
+
+  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
     defval: null,
     raw: true,
+    range: startRow + headerOffset,
   })
 
   const clientes: ClienteComercialRow[] = []
