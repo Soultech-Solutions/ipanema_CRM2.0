@@ -64,16 +64,12 @@ export interface Client {
   receitaEmRisco: number
   receitaPotencial: number
   ticketMedio: number
-  frequenciaEmbarques: number
-  /** Yield médio R$/ton derivado de VALOR / PESO */
-  yieldMedio: number
-  /** Contagem de TIPO CTE = DEVOLUÇÃO * */
-  devolucoes: number
-  /** Contagem de TIPO CTE = REENTREGA */
-  reentregas: number
-  /** CT-es sem NÚM. FATURA */
-  ctesAbertos: number
-  diasSemEmbarque: number
+  /** Taxa de conversão cotado → realizado no ano corrente (0–1) */
+  taxaConversao: number
+  /** Meses com venda realizada nos últimos 6 meses do ano corrente */
+  frequenciaCompra: number
+  /** Dias desde a Última Compra */
+  diasSemCompra: number
   status: 'ativo' | 'risco' | 'inativo'
 }
 

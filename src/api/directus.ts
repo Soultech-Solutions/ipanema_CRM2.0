@@ -66,7 +66,7 @@ function mapClienteDetail (row: DirectusCliente & Record<string, unknown>): Clie
     produtos: (row.produtos as string[]) || [],
     rotas: (row.rotas as string[]) || [],
     destinatarios: Number(row.destinatarios || 0),
-    embarquesMes: Number(row.embarquesMes || base.frequenciaEmbarques),
+    embarquesMes: Number(row.embarquesMes || base.frequenciaCompra),
   }
 }
 
@@ -83,7 +83,7 @@ export async function fetchDashboard (): Promise<DashboardData> {
 
     const kpis = Array.isArray(kpisRows) ? kpisRows[0] : kpisRows
     if (!kpis) {
-      throw new Error('dashboard_kpis vazio — importe uma planilha LOG FALA em Base de Dados')
+      throw new Error('dashboard_kpis vazio — importe uma planilha de clientes em Base de Dados')
     }
 
     const [insights, recomendacoes, alertas, clientesRisco, aiModules] = await Promise.all([
@@ -160,7 +160,7 @@ export async function fetchClientById (id: string): Promise<ClientDetail | undef
   }
 
   return withLocalData(async store => {
-    if (!store.ctes.length) await store.hydrateCtesFromSeed()
+    if (!store.rows.length) await store.hydrateRowsFromSeed()
     const detail = store.getClientDetail(id)
     return detail ? cloneData(detail) : undefined
   })
@@ -168,7 +168,8 @@ export async function fetchClientById (id: string): Promise<ClientDetail | undef
 
 export async function fetchSellers (): Promise<Seller[]> {
   if (useDirectus) return fromDirectus<Seller>('vendedores')
-  // Base LOG FALA não possui vendedor — placeholder até fonte complementar
+  // TODO: usar buildSellers() de baseComercialAnalytics (já calcula isso a partir
+  // dos clientes reais) em vez do mock — falta o store expor esse array.
   return cloneData(mockSellers)
 }
 

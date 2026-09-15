@@ -1,15 +1,11 @@
-import type { Client, ClientDetail, DashboardData } from '@/types/commercial'
-import type { CteDocument } from '@/types/cte'
+import type { Client, ClientDetail, DashboardData, Insight, Recommendation, Alert, AiModule } from '@/types/commercial'
+import type { ClienteComercialRow } from '@/types/base-comercial'
 import { directus } from '@/api/directusClient'
-import type { AnalyticsResult, ImportStats } from '@/services/cteAnalytics'
+import type { AnalyticsResult, ImportStats } from '@/services/baseComercialAnalytics'
 
 const BATCH_SIZE = 150
 
 export type SyncProgress = (message: string) => void
-
-export function cteChave (cte: Pick<CteDocument, 'filial' | 'serie' | 'codigo'>): string {
-  return `${cte.filial || ''}|${cte.serie || ''}|${cte.codigo}`
-}
 
 function chunk<T> (items: T[], size: number): T[][] {
   const out: T[][] = []
@@ -92,60 +88,40 @@ function mapClient (client: Client, detail?: ClientDetail): Record<string, unkno
     receitaEmRisco: client.receitaEmRisco,
     receitaPotencial: client.receitaPotencial,
     ticketMedio: client.ticketMedio,
-    frequenciaEmbarques: client.frequenciaEmbarques,
-    yieldMedio: client.yieldMedio,
-    devolucoes: client.devolucoes,
-    reentregas: client.reentregas,
-    ctesAbertos: client.ctesAbertos,
-    diasSemEmbarque: client.diasSemEmbarque,
+    taxaConversao: client.taxaConversao,
+    frequenciaCompra: client.frequenciaCompra,
+    diasSemCompra: client.diasSemCompra,
     status: client.status,
     destinatarios: detail?.destinatarios ?? 0,
-    embarquesMes: detail?.embarquesMes ?? client.frequenciaEmbarques,
+    embarquesMes: detail?.embarquesMes ?? client.frequenciaCompra,
     produtos: detail?.produtos ?? [client.segmento],
     rotas: detail?.rotas ?? [],
   }
 }
 
-function mapCte (cte: CteDocument): Record<string, unknown> {
+/**
+ * Envia a linha bruta do cliente (equivalente ao antigo mapCte, mas para o
+ * grain de 1-linha-por-cliente da Base Teste, não 1-linha-por-CT-e).
+ */
+function mapClienteRow (row: ClienteComercialRow): Record<string, unknown> {
   return {
-    chave: cteChave(cte),
-    tipoDocumento: cte.tipoDocumento,
-    filial: cte.filial,
-    serie: cte.serie,
-    codigo: cte.codigo,
-    tipoCte: cte.tipoCte,
-    dtCadastro: cte.dtCadastro,
-    filFatura: cte.filFatura,
-    numFatura: cte.numFatura,
-    dtVencimento: cte.dtVencimento,
-    codUnn: cte.codUnn,
-    codCus: cte.codCus,
-    clienteCodigo: cte.clienteCodigo,
-    grupoCliente: cte.grupoCliente,
-    codItinerario: cte.codItinerario,
-    valor: cte.valor,
-    impostos: cte.impostos,
-    munOrigem: cte.munOrigem,
-    ufOrigem: cte.ufOrigem,
-    munDestino: cte.munDestino,
-    ufDestino: cte.ufDestino,
-    codRegiao: cte.codRegiao,
-    regiao: cte.regiao,
-    unidadeNegocio: cte.unidadeNegocio,
-    centroCusto: cte.centroCusto,
-    centroGasto: cte.centroGasto,
-    classificacao: cte.classificacao,
-    tipoTabela: cte.tipoTabela,
-    tabelaFrete: cte.tabelaFrete,
-    remetente: cte.remetente,
-    destinatario: cte.destinatario,
-    pesoKg: cte.pesoKg,
-    pesoCalc: cte.pesoCalc,
-    valorPedagio: cte.valorPedagio,
-    valorMercadoria: cte.valorMercadoria,
-    dtEntrega: cte.dtEntrega,
-    fretePeso: cte.fretePeso,
-    observacoes: cte.observacoes,
+    codCliente: row.codCliente,
+    razaoSocial: row.razaoSocial,
+    segmento: row.segmento,
+    vendedor: row.vendedor,
+    representante: row.representante,
+    ultimaCompra: row.ultimaCompra,
+    dataCadastro: row.dataCadastro,
+    status: row.status,
+    cidade: row.cidade,
+    uf: row.uf,
+    tipoEstabelecimento: row.tipoEstabelecimento,
+    origemCliente: row.origemCliente,
+    // Directus não aceita bem objetos aninhados dinâmicos em campo simples —
+    // grava como JSON. Se preferir colunas separadas por mês/ano, isso vira
+    // uma collection própria (linhas_comerciais_mensal) — falar com o Marcos.
+    mensal: JSON.stringify(row.mensal),
+    anual: JSON.stringify(row.anual),
   }
 }
 
@@ -168,24 +144,25 @@ async function upsertDashboardKpis (dashboard: DashboardData, onProgress?: SyncP
 }
 
 export interface SyncImportInput {
-  ctes: CteDocument[]
+  rows: ClienteComercialRow[]
   result: AnalyticsResult
 }
 
 export interface SyncImportResult {
   stats: ImportStats
   clientesCriados: number
-  ctesCriados: number
+  linhasCriadas: number
 }
 
 /**
- * Full replace of analytical + transactional layers in Directus after a LOG FALA import.
+ * Full replace of analytical + transactional layers in Directus after a
+ * Base Teste import.
  */
 export async function syncImportToDirectus (
   input: SyncImportInput,
   onProgress?: SyncProgress,
 ): Promise<SyncImportResult> {
-  const { ctes, result } = input
+  const { rows, result } = input
   const { clients, dashboard, clientDetails, stats } = result
 
   const replaceOrder = [
@@ -195,7 +172,7 @@ export async function syncImportToDirectus (
     'recomendacoes',
     'alertas',
     'ai_modules',
-    'ctes',
+    'linhas_comerciais',
     'clientes',
   ]
 
@@ -261,7 +238,7 @@ export async function syncImportToDirectus (
   await createBatch('historico_faturamento', historico, onProgress, 'Enviando histórico')
   await createBatch('movimentacoes', movimentacoes, onProgress, 'Enviando movimentações')
 
-  const globalInsights = dashboard.insights.map(ins => ({
+  const globalInsights = dashboard.insights.map((ins: Insight) => ({
     titulo: ins.titulo,
     descricao: ins.descricao,
     tipo: ins.tipo,
@@ -278,7 +255,7 @@ export async function syncImportToDirectus (
 
   await createBatch(
     'recomendacoes',
-    dashboard.recomendacoes.map(r => ({
+    dashboard.recomendacoes.map((r: Recommendation) => ({
       titulo: r.titulo,
       descricao: r.descricao,
       prioridade: r.prioridade,
@@ -295,7 +272,7 @@ export async function syncImportToDirectus (
 
   await createBatch(
     'alertas',
-    dashboard.alertas.map(a => ({
+    dashboard.alertas.map((a: Alert) => ({
       titulo: a.titulo,
       descricao: a.descricao,
       severidade: a.severidade,
@@ -310,7 +287,7 @@ export async function syncImportToDirectus (
 
   await createBatch(
     'ai_modules',
-    dashboard.aiModules.map(m => ({
+    dashboard.aiModules.map((m: AiModule) => ({
       titulo: m.titulo,
       descricao: m.descricao,
       icon: m.icon,
@@ -320,8 +297,8 @@ export async function syncImportToDirectus (
     'Enviando módulos IA',
   )
 
-  const ctePayloads = ctes.map(mapCte)
-  const createdCtes = await createBatch('ctes', ctePayloads, onProgress, 'Enviando CT-es')
+  const linhaPayloads = rows.map(mapClienteRow)
+  const createdLinhas = await createBatch('linhas_comerciais', linhaPayloads, onProgress, 'Enviando base de clientes')
 
   await upsertDashboardKpis(dashboard, onProgress)
 
@@ -329,9 +306,9 @@ export async function syncImportToDirectus (
   await directus.post('/items/importacoes', {
     source_name: stats.sourceName,
     imported_at: stats.importedAt,
-    total_ctes: stats.totalCtes,
     total_clientes: stats.totalClientes,
-    total_valor: stats.totalValor,
+    total_realizado: stats.totalRealizado,
+    total_cotado: stats.totalCotado,
     status: 'ok',
     error_message: null,
   })
@@ -341,7 +318,7 @@ export async function syncImportToDirectus (
   return {
     stats,
     clientesCriados: createdClients.length,
-    ctesCriados: createdCtes.length,
+    linhasCriadas: createdLinhas.length,
   }
 }
 

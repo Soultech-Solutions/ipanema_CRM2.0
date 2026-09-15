@@ -1,6 +1,6 @@
 <script lang="ts" setup>
   import type { Seller } from '@/types/commercial'
-  import { CTE_COLUMN_MAP } from '@/types/cte'
+  import { BASE_COLUMN_MAP } from '@/types/base-comercial'
   import { computed, onMounted, ref } from 'vue'
   import { fetchSellers } from '@/api/directus'
   import { useCommercialStore } from '@/stores/commercial'
@@ -26,54 +26,52 @@
 
   const canImport = computed(() => !!selectedFile.value && !commercial.importing && !commercial.syncing)
 
-  const excelColumns = Object.keys(CTE_COLUMN_MAP)
+  const excelColumns = Object.keys(BASE_COLUMN_MAP)
 
   const statsCards = computed(() => {
     const s = commercial.stats
     if (!s) {
       return [
-        { label: 'CT-es na base', value: '—', icon: 'mdi-file-document' },
-        { label: 'Clientes pagadores', value: '—', icon: 'mdi-account-group' },
-        { label: 'CT-es em aberto', value: '—', icon: 'mdi-file-clock' },
-        { label: 'Reentregas', value: '—', icon: 'mdi-truck-delivery' },
+        { label: 'Clientes na base', value: '—', icon: 'mdi-account-group' },
+        { label: 'Clientes ativos', value: '—', icon: 'mdi-account-check' },
+        { label: 'Clientes inativos', value: '—', icon: 'mdi-account-off' },
+        { label: 'Realizado no ano', value: '—', icon: 'mdi-currency-usd' },
       ]
     }
     return [
-      { label: 'CT-es na base', value: s.totalCtes.toLocaleString('pt-BR'), icon: 'mdi-file-document' },
-      { label: 'Clientes pagadores', value: s.totalClientes.toLocaleString('pt-BR'), icon: 'mdi-account-group' },
-      { label: 'CT-es em aberto', value: s.ctesAbertos.toLocaleString('pt-BR'), icon: 'mdi-file-clock' },
-      { label: 'Reentregas', value: s.reentregas.toLocaleString('pt-BR'), icon: 'mdi-truck-delivery' },
+      { label: 'Clientes na base', value: s.totalClientes.toLocaleString('pt-BR'), icon: 'mdi-account-group' },
+      { label: 'Clientes ativos', value: s.clientesAtivos.toLocaleString('pt-BR'), icon: 'mdi-account-check' },
+      { label: 'Clientes inativos', value: s.clientesInativos.toLocaleString('pt-BR'), icon: 'mdi-account-off' },
+      { label: 'Realizado no ano', value: formatCurrency(s.totalRealizado, true), icon: 'mdi-currency-usd' },
     ]
   })
 
   const derivedMetrics = [
-    { from: 'VALOR + DT. CADASTRO', to: 'Faturamento histórico / vs meta' },
-    { from: 'TIPO CTE = DEVOLUÇÃO*', to: 'Taxa de devoluções' },
-    { from: 'TIPO CTE = REENTREGA', to: 'Taxa de reentregas' },
-    { from: 'NÚM. FATURA vazio', to: 'CT-es em aberto (giro)' },
-    { from: 'VALOR / PESO KG', to: 'Yield comercial (R$/ton)' },
-    { from: 'UF/MUN ORIGEM→DESTINO', to: 'Rotas e concentração regional' },
-    { from: 'CLIENTE + DESTINATÁRIO', to: 'Carteira e destinatários' },
-    { from: 'CLASSIFICAÇÃO / TABELA', to: 'Mix e oportunidades de repricing' },
+    { from: 'REALIZADO (ano corrente)', to: 'Faturamento histórico / vs cotado' },
+    { from: 'STATUS = INATIVO', to: 'Clientes inativos' },
+    { from: 'Última Compra', to: 'Dias sem compra / risco de churn' },
+    { from: 'COTADO vs REALIZADO', to: 'Taxa de conversão' },
+    { from: 'Vendedor', to: 'Ranking comercial' },
+    { from: 'Segmento / UF / Cidade', to: 'Mix e concentração regional' },
   ]
 
   const dataSources = [
     {
       title: 'Upload de planilhas',
       icon: 'mdi-cloud-upload',
-      desc: 'Base LOG FALA (CT-es / faturamento) no layout Raça.',
+      desc: 'Base comercial (cotado x realizado) no layout Ipanema.',
       action: 'upload',
     },
     {
       title: 'Carteiras de clientes',
       icon: 'mdi-account-group',
-      desc: 'Agrega CLIENTE / GRUPO CLIENTE a partir dos CT-es.',
+      desc: 'Clientes já vêm identificados na planilha, com vendedor e status.',
       action: 'clientes',
     },
     {
       title: 'Indicadores comerciais',
       icon: 'mdi-chart-bar',
-      desc: 'Yield, devoluções, reentregas e CT-es abertos.',
+      desc: 'Conversão, clientes inativos e receita em risco.',
       action: 'indicadores',
     },
     {
@@ -94,7 +92,7 @@
       const syncNote = commercial.syncToDirectus
         ? ' · sincronizado com Directus'
         : ''
-      successMsg.value = `Importação concluída: ${commercial.stats?.totalCtes.toLocaleString('pt-BR')} CT-es · ${commercial.stats?.totalClientes} clientes${syncNote}.`
+      successMsg.value = `Importação concluída: ${commercial.stats?.totalClientes.toLocaleString('pt-BR')} clientes (${commercial.stats?.clientesAtivos} ativos)${syncNote}.`
       uploadFiles.value = null
     } catch {
       // error already in commercial.error
@@ -104,7 +102,7 @@
   async function reloadSeed () {
     successMsg.value = ''
     commercial.clearCache()
-    await commercial.importFromUrl(`${import.meta.env.BASE_URL}data/base-fat-raca.xlsx`, 'base-fat-raca.xlsx')
+    await commercial.importFromUrl(`${import.meta.env.BASE_URL}data/base-teste.xlsx`, 'base-teste.xlsx')
     await dashboard.load()
     successMsg.value = commercial.syncToDirectus
       ? 'Base seed recarregada e sincronizada com Directus.'
@@ -187,16 +185,15 @@
             >
               Base ativa:
               <strong>{{ commercial.stats.sourceName }}</strong>
-              · {{ commercial.stats.totalCtes.toLocaleString('pt-BR') }} CT-es
-              · {{ commercial.stats.totalClientes }} clientes
-              · faturamento {{ formatCurrency(commercial.stats.totalValor, true) }}
+              · {{ commercial.stats.totalClientes.toLocaleString('pt-BR') }} clientes
+              · realizado {{ formatCurrency(commercial.stats.totalRealizado, true) }}
             </v-alert>
 
             <v-file-input
               v-model="uploadFiles"
               accept=".xlsx,.xls,.csv"
               chips
-              label="Selecione a base LOG FALA (Excel)"
+              label="Selecione a base de clientes (Excel)"
               prepend-icon="mdi-file-excel"
               show-size
               variant="outlined"
@@ -263,15 +260,16 @@
             </div>
 
             <v-alert class="mt-4" type="info" variant="tonal">
-              Layout: 1 linha = 1 CT-e. O import recalcula Health Score, CII,
-              alertas, recomendações e a carteira de clientes
+              Layout: 1 linha = 1 cliente (cotado x realizado por mês/ano). O import
+              recalcula Health Score, CII, alertas, recomendações e a carteira de
+              clientes
               <template v-if="commercial.syncToDirectus">
-                e grava em Directus (ctes, clientes, KPIs)
+                e grava em Directus (linhas_comerciais, clientes, KPIs)
               </template>.
             </v-alert>
 
             <div class="text-subtitle-2 font-weight-bold mt-6 mb-2">
-              Colunas reconhecidas ({{ excelColumns.length }})
+              Colunas reconhecidas ({{ excelColumns.length }} fixas + cotado/realizado por mês e ano)
             </div>
 
             <div class="d-flex flex-wrap ga-1 mb-4">
@@ -309,18 +307,18 @@
         <v-tabs-window-item value="clientes">
           <v-card-text class="pa-6">
             <p class="text-body-2 mb-4">
-              Clientes são agregados de <code>CLIENTE</code> /
-              <code>GRUPO CLIENTE</code> na base de CT-es. Carteira em
+              Clientes já vêm identificados na planilha (<code>Cód. Cliente</code> /
+              <code>Razao Social</code>), com vendedor e status. Carteira em
               <router-link to="/clientes">Clientes</router-link>.
             </p>
 
             <v-row>
               <v-col
                 v-for="item in [
-                  'Faturamento (VALOR por período)',
-                  'CT-es e tipos (NORMAL, DEVOLUÇÃO, REENTREGA)',
-                  'Rotas (origem → destino / itinerário)',
-                  'Yield, fatura aberta e destinatários',
+                  'Faturamento (cotado x realizado por mês/ano)',
+                  'Status (ATIVO / INATIVO)',
+                  'Segmento, cidade e UF',
+                  'Vendedor e representante',
                 ]"
                 :key="item"
                 cols="12"
@@ -400,7 +398,7 @@
         <v-tabs-window-item value="base">
           <v-card-text class="pa-6">
             <v-alert class="mb-4" icon="mdi-api" type="success" variant="tonal">
-              Conectada ao sistema da Raça via API. Dashboard + alertas + insights.
+              Conectada ao sistema da Ipanema via API. Dashboard + alertas + insights.
             </v-alert>
 
             <p class="text-body-2 mb-2">
@@ -408,16 +406,16 @@
             </p>
 
             <p class="text-body-2 text-medium-emphasis mb-2">
-              Collection principal: <code>ctes</code> (espelho da LOG FALA).
-              Derivadas: <code>clientes</code> (agregado),
+              Collection principal: <code>linhas_comerciais</code> (espelho da
+              planilha de clientes). Derivadas: <code>clientes</code> (agregado),
               <code>dashboard_kpis</code>, <code>insights</code>,
               <code>recomendacoes</code>, <code>alertas</code>.
             </p>
 
-            <v-alert type="warning" variant="tonal">
-              A base atual <strong>não traz vendedor</strong>, visitas, propostas
-              nem metas. Eficiência comercial e cadastro de vendedores exigem
-              outra fonte (CRM / ERP / planilha complementar).
+            <v-alert type="info" variant="tonal">
+              A base já traz vendedor por cliente. O ranking de vendedores nesta
+              tela ainda usa dados de exemplo até o cálculo real (já pronto no
+              motor de análise) ser conectado aqui.
             </v-alert>
           </v-card-text>
         </v-tabs-window-item>

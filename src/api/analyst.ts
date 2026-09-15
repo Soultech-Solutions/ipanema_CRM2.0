@@ -42,15 +42,15 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
   if (!kpis || !clients.length) {
     return {
       conversationId,
-      answer: 'Ainda não há base carregada. Importe a planilha LOG FALA em Base de Dados para eu consultar os indicadores.',
+      answer: 'Ainda não há base carregada. Importe a planilha de clientes em Base de Dados para eu consultar os indicadores.',
       suggestedActions: [{ label: 'Ir para Base de Dados', route: '/base-dados' }],
     }
   }
 
   const risco = [...clients].sort((a, b) => b.receitaEmRisco - a.receitaEmRisco).slice(0, 5)
   const potencial = [...clients].sort((a, b) => b.receitaPotencial - a.receitaPotencial).slice(0, 5)
-  const queda = [...clients].filter(c => c.status === 'risco' || c.diasSemEmbarque >= 20)
-    .sort((a, b) => b.diasSemEmbarque - a.diasSemEmbarque)
+  const queda = [...clients].filter(c => c.status === 'risco' || c.diasSemCompra >= 20)
+    .sort((a, b) => b.diasSemCompra - a.diasSemCompra)
     .slice(0, 5)
 
   if (/risco|perda|churn|perder/.test(q)) {
@@ -86,11 +86,11 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
       conversationId,
       model: 'local-fallback',
       answer: [
-        `Oportunidades de expansão pelo benchmark interno (Receita potencial da carteira: **${formatCurrency(kpis.receitaPotencial, true)}**):`,
+        `Oportunidades de expansão pelo gap cotado x realizado (Receita potencial da carteira: **${formatCurrency(kpis.receitaPotencial, true)}**):`,
         '',
         ...lines,
         '',
-        '_Resposta local — endpoint Directus + LLM fará o grounding completo nos CT-es._',
+        '_Resposta local — endpoint Directus + LLM fará o grounding completo na base._',
       ].join('\n'),
       sources: potencial.map(c => ({ type: 'cliente' as const, id: c.id, label: c.nome })),
       suggestedActions: [
@@ -100,15 +100,15 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
     }
   }
 
-  if (/faturamento|caindo|queda|diminu|sem embarque|parado/.test(q)) {
+  if (/faturamento|caindo|queda|diminu|sem compra|parado/.test(q)) {
     const lines = queda.map((c, i) =>
-      `${i + 1}. **${c.nome}**${c.regiao ? ` (${c.regiao})` : ''} — ${c.diasSemEmbarque} dias sem embarque, Health ${c.healthScore}, status ${c.status}.`,
+      `${i + 1}. **${c.nome}**${c.regiao ? ` (${c.regiao})` : ''} — ${c.diasSemCompra} dias sem compra, Health ${c.healthScore}, status ${c.status}.`,
     )
     return {
       conversationId,
       model: 'local-fallback',
       answer: [
-        'Clientes com sinal de redução de movimento / risco operacional:',
+        'Clientes com sinal de redução de compra / risco de churn:',
         '',
         ...lines,
         '',
@@ -124,7 +124,7 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
 
   if (/prioridade|prioriz|hoje|agora|fazer/.test(q)) {
     const top = store.dashboard?.recomendacoes?.slice(0, 3) ?? []
-    const lines = top.map((r, i) =>
+    const lines = top.map((r, i: number) =>
       `${i + 1}. **${r.titulo}** (${r.prioridade})${r.regiao ? ` · ${r.regiao}` : ''} — ${r.clienteNome || 'carteira'}`,
     )
     return {
@@ -143,16 +143,26 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
   }
 
   if (/vendedor|performance|quem vende/.test(q)) {
+    const porVendedor = new Map<string, { nome: string, total: number, clientes: number }>()
+    for (const c of clients) {
+      const entry = porVendedor.get(c.vendedorId) ?? { nome: c.vendedorNome, total: 0, clientes: 0 }
+      entry.total += c.receitaAnual
+      entry.clientes += 1
+      porVendedor.set(c.vendedorId, entry)
+    }
+    const ranking = [...porVendedor.values()].sort((a, b) => b.total - a.total).slice(0, 5)
+    const lines = ranking.map((v, i) =>
+      `${i + 1}. **${v.nome}** — ${formatCurrency(v.total, true)} em ${v.clientes} clientes.`,
+    )
     return {
       conversationId,
       model: 'local-fallback',
       answer: [
-        'A base LOG FALA atual **não traz vendedor** vinculado aos CT-es.',
-        'Quando houver collection `vendedores` + vínculo no Directus, poderei responder quem vende melhor e quem gera menos receita por esforço.',
+        'Ranking de vendedores por receita realizada:',
         '',
-        'Por enquanto, a eficiência comercial da carteira está em **' + kpis.eficienciaComercial + '**/100 (proxy via CT-es abertos e devoluções).',
+        ...lines,
       ].join('\n'),
-      suggestedActions: [{ label: 'Ver Motor de IA', route: '/motor-ia' }],
+      suggestedActions: [{ label: 'Ver Base de Dados', route: '/base-dados' }],
     }
   }
 
@@ -170,7 +180,7 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
         `• Eficiência comercial: **${kpis.eficienciaComercial}**`,
         `• Crescimento sustentável: **${kpis.crescimentoSustentavel}**`,
         '',
-        `Base: **${store.stats?.totalCtes.toLocaleString('pt-BR')}** CT-es · **${store.stats?.totalClientes}** clientes.`,
+        `Base: **${store.stats?.totalClientes.toLocaleString('pt-BR')}** clientes (**${store.stats?.clientesAtivos}** ativos).`,
       ].join('\n'),
       sources: [{ type: 'kpi', label: 'Dashboard KPIs' }],
       suggestedActions: [{ label: 'Abrir dashboard', route: '/' }],
@@ -188,6 +198,7 @@ async function localAnalystFallback (payload: AnalystAskRequest): Promise<Analys
       '• Quais clientes estão diminuindo o faturamento?',
       '• O que deve ser priorizado hoje?',
       '• Como está o CII / saúde da carteira?',
+      '• Quem são os melhores vendedores?',
       '',
       `Sua pergunta: _"${payload.question}"_`,
       '',

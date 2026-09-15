@@ -130,12 +130,10 @@
               v-for="stat in [
                 { label: 'Receita anual', value: formatCurrency(store.current.receitaAnual, true) },
                 { label: 'Ticket médio', value: formatCurrency(store.current.ticketMedio) },
-                { label: 'Embarques/mês', value: String(store.current.embarquesMes) },
-                { label: 'Yield médio', value: `R$ ${store.current.yieldMedio}/ton` },
-                { label: 'Devoluções', value: String(store.current.devolucoes) },
-                { label: 'Reentregas', value: String(store.current.reentregas) },
-                { label: 'CT-es abertos', value: String(store.current.ctesAbertos) },
-                { label: 'Dias sem embarque', value: String(store.current.diasSemEmbarque) },
+                { label: 'Compras/mês', value: String(store.current.embarquesMes) },
+                { label: 'Taxa de conversão', value: formatPercent(store.current.taxaConversao) },
+                { label: 'Meses com compra', value: String(store.current.frequenciaCompra) },
+                { label: 'Dias sem compra', value: String(store.current.diasSemCompra) },
                 { label: 'Prob. de perda', value: formatPercent(store.current.probabilidadePerda) },
                 { label: 'Destinatários', value: String(store.current.destinatarios) },
               ]"

@@ -1,4 +1,4 @@
-import type { AnalyticsResult } from '@/services/cteAnalytics'
+import type { AnalyticsResult } from '@/services/baseComercialAnalytics'
 import type { ImportWorkerRequest, ImportWorkerResponse } from '@/workers/importWorker'
 
 let worker: Worker | null = null

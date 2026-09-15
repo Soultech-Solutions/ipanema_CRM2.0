@@ -1,13 +1,14 @@
 import type { Client, ClientDetail, DashboardData } from '@/types/commercial'
-import type { CteDocument } from '@/types/cte'
+import type { ClienteComercialRow } from '@/types/base-comercial'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import { analyzeCtes, buildClientDetail, type ImportStats } from '@/services/cteAnalytics'
-import { fetchAndParseCteUrl, parseCteFile } from '@/services/cteParser'
+import { analyzeBaseComercial, buildClientDetail, type ImportStats } from '@/services/baseComercialAnalytics'
+import { fetchAndParseBaseComercialUrl, parseBaseComercialFile } from '@/services/baseComercialParser'
 import { isDirectusSyncEnabled, syncImportToDirectus } from '@/services/directusSync'
 
-const STORAGE_KEY = 'raca_comercial_analytics_v3'
-const SEED_URL = `${import.meta.env.BASE_URL}data/base-fat-raca.xlsx`
+const STORAGE_KEY = 'ipanema_comercial_analytics_v1'
+// Troque pelo nome real do arquivo que você vai colocar em public/data/
+const SEED_URL = `${import.meta.env.BASE_URL}data/base-teste.xlsx`
 
 interface PersistedPayload {
   stats: ImportStats
@@ -34,7 +35,7 @@ function persist (payload: PersistedPayload) {
 }
 
 export const useCommercialStore = defineStore('commercial', () => {
-  const ctes = shallowRef<CteDocument[]>([])
+  const rows = shallowRef<ClienteComercialRow[]>([])
   const clients = ref<Client[]>([])
   const dashboard = ref<DashboardData | null>(null)
   const stats = ref<ImportStats | null>(null)
@@ -49,10 +50,10 @@ export const useCommercialStore = defineStore('commercial', () => {
   const hasData = computed(() => !!dashboard.value && clients.value.length > 0)
   const syncToDirectus = computed(() => isDirectusSyncEnabled())
 
-  async function applyAnalytics (list: CteDocument[], sourceName: string) {
+  async function applyAnalytics (list: ClienteComercialRow[], sourceName: string) {
     progress.value = 'Calculando indicadores...'
-    const result = analyzeCtes(list, sourceName)
-    ctes.value = list
+    const result = analyzeBaseComercial(list, sourceName)
+    rows.value = list
     clients.value = result.clients
     dashboard.value = result.dashboard
     stats.value = result.stats
@@ -67,7 +68,7 @@ export const useCommercialStore = defineStore('commercial', () => {
       syncing.value = true
       try {
         await syncImportToDirectus(
-          { ctes: list, result },
+          { rows: list, result },
           message => {
             progress.value = message
           },
@@ -103,11 +104,11 @@ export const useCommercialStore = defineStore('commercial', () => {
         dashboard.value = cached.dashboard
         stats.value = cached.stats
         ready.value = true
-        void hydrateCtesFromSeed()
+        void hydrateRowsFromSeed()
         return
       }
 
-      await importFromUrl(SEED_URL, 'base-fat-raca.xlsx (seed)')
+      await importFromUrl(SEED_URL, 'base-teste.xlsx (seed)')
     } catch (error_) {
       error.value = error_ instanceof Error ? error_.message : 'Erro ao carregar base'
     } finally {
@@ -115,14 +116,14 @@ export const useCommercialStore = defineStore('commercial', () => {
     }
   }
 
-  async function hydrateCtesFromSeed () {
-    if (ctes.value.length) return
+  async function hydrateRowsFromSeed () {
+    if (rows.value.length) return
     try {
-      progress.value = 'Carregando CT-es para detalhe...'
-      const list = await fetchAndParseCteUrl(SEED_URL)
-      ctes.value = list
+      progress.value = 'Carregando clientes para detalhe...'
+      const list = await fetchAndParseBaseComercialUrl(SEED_URL)
+      rows.value = list
     } catch {
-      // detail will be limited without raw CT-es
+      // detail will be limited without raw rows
     } finally {
       progress.value = ''
     }
@@ -133,8 +134,8 @@ export const useCommercialStore = defineStore('commercial', () => {
     error.value = null
     progress.value = 'Lendo planilha...'
     try {
-      const list = await fetchAndParseCteUrl(url)
-      if (!list.length) throw new Error('Nenhum CT-e encontrado na planilha')
+      const list = await fetchAndParseBaseComercialUrl(url)
+      if (!list.length) throw new Error('Nenhum cliente encontrado na planilha')
       await applyAnalytics(list, sourceName)
     } finally {
       importing.value = false
@@ -147,9 +148,9 @@ export const useCommercialStore = defineStore('commercial', () => {
     error.value = null
     progress.value = `Importando ${file.name}...`
     try {
-      const list = await parseCteFile(file)
+      const list = await parseBaseComercialFile(file)
       if (!list.length) {
-        throw new Error('Nenhum CT-e válido encontrado. Verifique o layout LOG FALA.')
+        throw new Error('Nenhum cliente válido encontrado. Verifique o layout da planilha.')
       }
       await applyAnalytics(list, file.name)
     } catch (error_) {
@@ -172,19 +173,19 @@ export const useCommercialStore = defineStore('commercial', () => {
   function getClientDetail (id: string): ClientDetail | undefined {
     const client = clients.value.find(c => c.id === id)
     if (!client || !dashboard.value) return undefined
-    if (!ctes.value.length) {
+    if (!rows.value.length) {
       return {
         ...client,
         historicoFaturamento: [],
         produtos: [client.segmento],
         rotas: [],
         destinatarios: 0,
-        embarquesMes: client.frequenciaEmbarques,
+        embarquesMes: client.frequenciaCompra,
         movimentacoes: [],
         insights: [{
           id: `ins-${id}-loading`,
           titulo: 'Carregando histórico',
-          descricao: 'Os CT-es ainda estão sendo hidratados. Reabra o cliente em instantes.',
+          descricao: 'Os dados ainda estão sendo carregados. Reabra o cliente em instantes.',
           tipo: 'explicacao',
           clienteId: id,
           createdAt: new Date().toISOString(),
@@ -192,14 +193,15 @@ export const useCommercialStore = defineStore('commercial', () => {
         recomendacoes: dashboard.value.recomendacoes.filter(r => r.clienteId === id),
       }
     }
-    return buildClientDetail(client, ctes.value, dashboard.value)
+    return buildClientDetail(client, rows.value, dashboard.value)
   }
 
   function clearCache () {
     localStorage.removeItem(STORAGE_KEY)
     localStorage.removeItem('raca_comercial_analytics_v1')
     localStorage.removeItem('raca_comercial_analytics_v2')
-    ctes.value = []
+    localStorage.removeItem('raca_comercial_analytics_v3')
+    rows.value = []
     clients.value = []
     dashboard.value = null
     stats.value = null
@@ -208,7 +210,7 @@ export const useCommercialStore = defineStore('commercial', () => {
   }
 
   return {
-    ctes,
+    rows,
     clients,
     dashboard,
     stats,
@@ -228,6 +230,6 @@ export const useCommercialStore = defineStore('commercial', () => {
     getClients,
     getClientDetail,
     clearCache,
-    hydrateCtesFromSeed,
+    hydrateRowsFromSeed,
   }
 })

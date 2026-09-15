@@ -1,29 +1,29 @@
 /// <reference lib="webworker" />
-import { analyzeCtes } from '@/services/cteAnalytics'
-import { parseCteWorkbook } from '@/services/cteParser'
+import { analyzeBaseComercial } from '@/services/baseComercialAnalytics'
+import { parseBaseComercialWorkbook } from '@/services/baseComercialParser'
 
 export type ImportWorkerRequest =
   | { id: number, type: 'parse-analyze', buffer: ArrayBuffer, sourceName: string }
 
 export type ImportWorkerResponse =
-  | { id: number, ok: true, result: ReturnType<typeof analyzeCtes> }
+  | { id: number, ok: true, result: ReturnType<typeof analyzeBaseComercial> }
   | { id: number, ok: false, error: string }
 
 self.onmessage = (event: MessageEvent<ImportWorkerRequest>) => {
   const msg = event.data
   try {
     if (msg.type === 'parse-analyze') {
-      const ctes = parseCteWorkbook(msg.buffer)
-      if (!ctes.length) {
+      const rows = parseBaseComercialWorkbook(msg.buffer)
+      if (!rows.length) {
         const response: ImportWorkerResponse = {
           id: msg.id,
           ok: false,
-          error: 'Nenhum CT-e válido encontrado. Verifique o layout LOG FALA.',
+          error: 'Nenhum cliente válido encontrado. Verifique o layout da planilha.',
         }
         self.postMessage(response)
         return
       }
-      const result = analyzeCtes(ctes, msg.sourceName)
+      const result = analyzeBaseComercial(rows, msg.sourceName)
       const response: ImportWorkerResponse = { id: msg.id, ok: true, result }
       self.postMessage(response)
       return

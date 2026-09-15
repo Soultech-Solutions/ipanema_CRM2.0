@@ -35,7 +35,7 @@
   const baseLabel = computed(() => {
     if (commercial.importing || commercial.loading) return 'Carregando base…'
     if (commercial.stats) {
-      return `${commercial.stats.totalCtes.toLocaleString('pt-BR')} CT-es`
+      return `${commercial.stats.totalClientes.toLocaleString('pt-BR')} clientes`
     }
     return 'Base local'
   })
