@@ -36,8 +36,7 @@ const router = createRouter({
         {
           path: 'follow-ups',
           name: 'follow-ups',
-          component: () => import('@/views/PlaceholderView.vue'),
-          props: { title: 'Follow-ups', icon: 'mdi-calendar-clock-outline', description: 'Central de retornos agendados e histórico de motivo de perda por cliente.' },
+          component: () => import('@/views/FollowUpsView.vue'),
           meta: { title: 'Follow-ups', icon: 'mdi-calendar-clock-outline' },
         },
         {
