@@ -30,8 +30,7 @@ const router = createRouter({
         {
           path: 'pipeline',
           name: 'pipeline',
-          component: () => import('@/views/PlaceholderView.vue'),
-          props: { title: 'Pipeline', icon: 'mdi-view-column-outline', description: 'Kanban de oportunidades em negociação, por estágio.' },
+          component: () => import('@/views/PipelineView.vue'),
           meta: { title: 'Pipeline', icon: 'mdi-view-column-outline' },
         },
         {
