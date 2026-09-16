@@ -395,7 +395,7 @@ extract emit_answer OR parse final text JSON
 
 O system prompt deve ser versionado em `domain/prompts.ts`. Conteúdo mínimo:
 
-1. **Papel:** Analista Comercial virtual da Raça Transportes.
+1. **Papel:** Analista Comercial virtual da Ipanema rolamentos.
 2. **Idioma:** português (Brasil).
 3. **Grounding:** só use números vindos das tools/contexto; se faltar dado, diga o que falta.
 4. **Escopo:** carteira, CT-es, risco, potencial, alertas, recomendações, CII.

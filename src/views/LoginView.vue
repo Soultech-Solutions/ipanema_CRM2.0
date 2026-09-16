@@ -36,7 +36,7 @@
       <div class="login-brand mb-8">
         <img
           :src="logoRaca"
-          alt="Raça Transportes"
+          alt="Ipanema rolamentos"
           class="login-logo mb-4"
         >
         <h1 class="brand-wordmark login-title">
