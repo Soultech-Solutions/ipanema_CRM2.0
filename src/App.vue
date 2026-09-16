@@ -5,5 +5,5 @@
 </template>
 
 <script lang="ts" setup>
-  // Raça analise comercial
+  // Ipanema CRM 2.0
 </script>

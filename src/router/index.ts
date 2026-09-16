@@ -105,8 +105,8 @@ router.beforeEach(async to => {
 })
 
 router.afterEach(to => {
-  const title = (to.meta.title as string) || 'Raça analise comercial'
-  document.title = `${title} | Raça analise comercial`
+  const title = (to.meta.title as string) || 'Ipanema CRM 2.0'
+  document.title = `${title} | Ipanema CRM 2.0`
 })
 
 export default router

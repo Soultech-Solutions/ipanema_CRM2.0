@@ -1,54 +1,59 @@
 /**
- * Primário: vermelho da marca · Secundário: preto · Accent: laranja CTA
+ * Tema Ipanema CRM 2.0 — extraído do Figma aprovado pelo cliente.
+ * Primário: vermelho institucional Ipanema · fonte: Inter.
  */
 
 import { createVuetify } from 'vuetify'
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/500.css'
+import '@fontsource/inter/600.css'
+import '@fontsource/inter/700.css'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 
-const racaLight = {
+const ipanemaLight = {
   dark: false,
   colors: {
-    'background': '#F3F5F8',
+    'background': '#F7F8FA',
     'surface': '#FFFFFF',
     'surface-bright': '#FFFFFF',
-    'surface-light': '#EEF1F5',
-    'surface-variant': '#DDE3EA',
-    'on-surface-variant': '#4A5563',
-    'primary': '#EB1823',
-    'primary-darken-1': '#C4121C',
-    'secondary': '#111111',
-    'secondary-darken-1': '#000000',
-    'accent': '#FF4800',
-    'error': '#CA1F26',
-    'info': '#333333',
-    'success': '#2E7D32',
-    'warning': '#FF4800',
-    'on-background': '#111111',
-    'on-surface': '#111111',
+    'surface-light': '#F7F8FA',
+    'surface-variant': '#E6E8EC',
+    'on-surface-variant': '#667085',
+    'primary': '#C61F3E',
+    'primary-darken-1': '#A5192F',
+    'secondary': '#1E2329',
+    'secondary-darken-1': '#111111',
+    'accent': '#2563EB',
+    'error': '#C61F3E',
+    'info': '#2563EB',
+    'success': '#2E8B57',
+    'warning': '#D97706',
+    'on-background': '#1E2329',
+    'on-surface': '#1E2329',
     'on-primary': '#FFFFFF',
     'on-secondary': '#FFFFFF',
   },
 }
 
-const racaDark = {
+const ipanemaDark = {
   dark: true,
   colors: {
-    'background': '#0A0A0A',
-    'surface': '#161616',
-    'surface-bright': '#222222',
-    'surface-light': '#1A1A1A',
-    'surface-variant': '#2A2A2A',
-    'on-surface-variant': '#B0B0B0',
-    'primary': '#FF3B45',
-    'primary-darken-1': '#EB1823',
+    'background': '#161A1F',
+    'surface': '#20252B',
+    'surface-bright': '#2B3138',
+    'surface-light': '#1A1E24',
+    'surface-variant': '#2B3138',
+    'on-surface-variant': '#D7DCE3',
+    'primary': '#E14A64',
+    'primary-darken-1': '#C61F3E',
     'secondary': '#FFFFFF',
     'secondary-darken-1': '#E0E0E0',
-    'accent': '#FF6A33',
-    'error': '#FF5252',
-    'info': '#B0B0B0',
-    'success': '#66BB6A',
-    'warning': '#FF6A33',
+    'accent': '#5B8DEF',
+    'error': '#E14A64',
+    'info': '#5B8DEF',
+    'success': '#4CAF7D',
+    'warning': '#E8A33D',
     'on-background': '#F5F5F5',
     'on-surface': '#F5F5F5',
     'on-primary': '#FFFFFF',
@@ -58,22 +63,22 @@ const racaDark = {
 
 export default createVuetify({
   theme: {
-    defaultTheme: 'racaLight',
+    defaultTheme: 'ipanemaLight',
     themes: {
-      racaLight,
-      racaDark,
+      ipanemaLight,
+      ipanemaDark,
     },
   },
   defaults: {
     VCard: {
-      rounded: 'lg',
+      rounded: 'xl',
     },
     VBtn: {
       rounded: 'lg',
       fontWeight: '600',
     },
     VChip: {
-      rounded: 'lg',
+      rounded: 'pill',
     },
   },
 })

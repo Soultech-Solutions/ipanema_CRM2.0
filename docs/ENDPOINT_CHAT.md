@@ -1,6 +1,6 @@
 # ENDPOINT_CHAT — Analista Comercial (Directus + Anthropic Claude)
 
-Especificação técnica completa para implementar o endpoint de chat do **Raça analise comercial**.
+Especificação técnica completa para implementar o endpoint de chat do **Ipanema CRM 2.0**.
 
 O documento é o guia de implementação do backend. O front já consome o contrato em:
 
@@ -604,4 +604,4 @@ export function askHandler(context: EndpointExtensionContext) {
 
 ---
 
-*Versão 1.0 — alinhada ao front Raça analise comercial (jul/2026). Qualquer breaking change no contrato exige atualização simultânea de `src/types/analyst.ts`, `src/api/analyst.ts` e este documento.*
+*Versão 1.0 — alinhada ao front Ipanema CRM 2.0 (jul/2026). Qualquer breaking change no contrato exige atualização simultânea de `src/types/analyst.ts`, `src/api/analyst.ts` e este documento.*

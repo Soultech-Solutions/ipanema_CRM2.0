@@ -22,7 +22,7 @@
     <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-6">
       <div>
         <h1 class="text-h5 font-weight-bold mb-1 brand-title">
-          Painel — Raça analise comercial
+          Painel — Ipanema CRM 2.0
         </h1>
 
         <p class="text-body-2 text-medium-emphasis mb-0">

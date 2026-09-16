@@ -2,7 +2,7 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useTheme } from 'vuetify'
-  import logoRaca from '@/assets/logo-raca.png'
+  import logoIpanema from '@/assets/logo-ipanema.png'
   import { useAuthStore } from '@/stores/auth'
   import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
@@ -30,7 +30,7 @@
     { title: 'Alertas', to: '/alertas', icon: 'mdi-bell-alert' },
   ]
 
-  const pageTitle = computed(() => (route.meta.title as string) || 'Raça analise comercial')
+  const pageTitle = computed(() => (route.meta.title as string) || 'Ipanema CRM 2.0')
   const isDark = computed(() => theme.global.current.value.dark)
   const baseLabel = computed(() => {
     if (commercial.importing || commercial.loading) return 'Carregando base…'
@@ -46,7 +46,7 @@
   }
 
   function toggleTheme () {
-    theme.global.name.value = isDark.value ? 'racaLight' : 'racaDark'
+    theme.global.name.value = isDark.value ? 'ipanemaLight' : 'ipanemaDark'
   }
 
   const authEnabled = import.meta.env.VITE_USE_MOCK === 'false'
@@ -69,18 +69,18 @@
         <div class="d-flex align-center ga-3">
           <div class="brand-logo-wrap" :class="{ 'brand-logo-wrap--rail': rail }">
             <img
-              :src="logoRaca"
-              alt="Raça Transportes"
+              :src="logoIpanema"
+              alt="Ipanema Rolamentos"
               class="brand-logo"
             >
           </div>
 
           <div v-if="!rail" class="overflow-hidden">
             <div class="brand-wordmark text-white">
-              Raça
+              Ipanema
             </div>
             <div class="text-caption brand-subtitle">
-              analise comercial
+              CRM 2.0
             </div>
           </div>
         </div>
@@ -227,7 +227,7 @@
 }
 
 .brand-header {
-  background: linear-gradient(180deg, rgba(235, 24, 35, 0.22), transparent);
+  background: linear-gradient(180deg, rgba(198, 31, 62, 0.22), transparent);
 }
 
 .brand-logo-wrap {
@@ -240,7 +240,7 @@
   background: #000;
   padding: 4px;
   overflow: hidden;
-  border: 1px solid rgba(235, 24, 35, 0.35);
+  border: 1px solid rgba(198, 31, 62, 0.35);
 }
 
 .brand-logo-wrap--rail {
@@ -266,14 +266,14 @@
 
 .nav-item--active,
 .app-nav :deep(.nav-item--active) {
-  background: rgba(235, 24, 35, 0.22) !important;
+  background: rgba(198, 31, 62, 0.22) !important;
 }
 
 .nav-item--active :deep(.v-list-item-title),
 .nav-item--active :deep(.v-icon),
 .app-nav :deep(.nav-item--active .v-list-item-title),
 .app-nav :deep(.nav-item--active .v-icon) {
-  color: #eb1823 !important;
+  color: #c61f3e !important;
   font-weight: 600;
 }
 

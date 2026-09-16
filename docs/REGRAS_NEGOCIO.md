@@ -1,10 +1,10 @@
-# Raça analise comercial — Regras de Negócio (Backend)
+# Ipanema CRM 2.0 — Regras de Negócio (Backend)
 
 Documento de referência para implementação futura em **Directus** (ou outro backend).  
 Reflete as regras já aplicadas no front (`src/services/cteAnalytics.ts`, `src/types/cte.ts`).
 
 **Versão:** 1.0  
-**Produto:** Raça analise comercial  
+**Produto:** Ipanema CRM 2.0  
 **Fonte primária de dados:** planilha LOG FALA (base de faturamento / CT-es)
 
 ---
