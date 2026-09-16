@@ -216,7 +216,7 @@
 
         <v-divider class="mb-4" />
 
-        <v-btn block class="mb-2" color="primary" rounded="lg" @click="router.push('/pipeline')">
+        <v-btn block class="mb-2" color="primary" rounded="lg" @click="router.push('/cotacao')">
           Criar cotação
         </v-btn>
         <v-btn block color="secondary" rounded="lg" variant="outlined">

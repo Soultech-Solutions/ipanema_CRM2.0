@@ -40,6 +40,12 @@ const router = createRouter({
           meta: { title: 'Follow-ups', icon: 'mdi-calendar-clock-outline' },
         },
         {
+          path: 'cotacao',
+          name: 'quote-builder',
+          component: () => import('@/views/MontarCotacaoView.vue'),
+          meta: { title: 'Montar cotação' },
+        },
+        {
           path: 'clientes',
           name: 'clients',
           component: () => import('@/views/ClientsView.vue'),
