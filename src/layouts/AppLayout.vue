@@ -21,13 +21,14 @@
   })
 
   const navItems = [
-    { title: 'Dashboard', to: '/', icon: 'mdi-view-dashboard', exact: true },
-    { title: 'Analista', to: '/analista', icon: 'mdi-robot-outline' },
-    { title: 'Base de Dados', to: '/base-dados', icon: 'mdi-database' },
-    { title: 'Motor de IA', to: '/motor-ia', icon: 'mdi-brain' },
+    { title: 'Visão comercial', to: '/', icon: 'mdi-view-dashboard', exact: true },
+    { title: 'Caixa de entrada', to: '/caixa-entrada', icon: 'mdi-email-outline' },
+    { title: 'Pipeline', to: '/pipeline', icon: 'mdi-view-column-outline' },
+    { title: 'Follow-ups', to: '/follow-ups', icon: 'mdi-calendar-clock-outline' },
     { title: 'Clientes', to: '/clientes', icon: 'mdi-account-group' },
-    { title: 'Recomendações', to: '/recomendacoes', icon: 'mdi-lightbulb-on' },
-    { title: 'Alertas', to: '/alertas', icon: 'mdi-bell-alert' },
+    { title: 'Produtos & preços', to: '/produtos', icon: 'mdi-tag-multiple-outline' },
+    { title: 'Portais', to: '/portais', icon: 'mdi-account-network-outline' },
+    { title: 'Integrações', to: '/integracoes', icon: 'mdi-puzzle-outline' },
   ]
 
   const pageTitle = computed(() => (route.meta.title as string) || 'Ipanema CRM 2.0')
