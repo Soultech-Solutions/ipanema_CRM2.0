@@ -24,8 +24,7 @@ const router = createRouter({
         {
           path: 'caixa-entrada',
           name: 'inbox',
-          component: () => import('@/views/PlaceholderView.vue'),
-          props: { title: 'Caixa de entrada', icon: 'mdi-email-outline', description: 'Leitura de e-mails de clientes com extração automática de itens de orçamento via IA.' },
+          component: () => import('@/views/CaixaEntradaView.vue'),
           meta: { title: 'Caixa de entrada', icon: 'mdi-email-outline' },
         },
         {
