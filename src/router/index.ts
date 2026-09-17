@@ -46,6 +46,12 @@ const router = createRouter({
           meta: { title: 'Montar cotação' },
         },
         {
+          path: 'proposta',
+          name: 'proposal-ready',
+          component: () => import('@/views/PropostaProntaView.vue'),
+          meta: { title: 'Proposta pronta para envio' },
+        },
+        {
           path: 'clientes',
           name: 'clients',
           component: () => import('@/views/ClientsView.vue'),

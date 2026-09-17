@@ -1,4 +1,8 @@
 <script lang="ts" setup>
+  import { useRouter } from 'vue-router'
+
+  const router = useRouter()
+
   const itens = [
     { produto: 'FAG 22320-E1-K', qtd: 10, preco: 'R$ 4.280,00', impostos: 'ICMS 18%', margem: '26,8%' },
     { produto: 'INA NK45/20', qtd: 8, preco: 'R$ 682,00', impostos: 'ICMS 18%', margem: '24,1%' },
@@ -132,7 +136,7 @@
             A IA montou a proposta com os dados disponíveis. O vendedor continua responsável pela validação final.
           </div>
 
-          <v-btn block class="mb-2" color="primary" rounded="lg">Gerar PDF da proposta</v-btn>
+          <v-btn block class="mb-2" color="primary" rounded="lg" @click="router.push('/proposta')">Gerar PDF da proposta</v-btn>
           <v-btn block class="mb-2" color="secondary" rounded="lg" variant="outlined">Pré-visualizar e-mail</v-btn>
           <v-btn block color="secondary" rounded="lg" variant="outlined">Enviar pelo Outlook</v-btn>
         </v-card>
