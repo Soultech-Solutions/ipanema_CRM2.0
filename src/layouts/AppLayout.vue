@@ -40,6 +40,8 @@
     }
     return 'Base local'
   })
+  const userName = computed(() => auth.displayName || 'Usuário')
+  const userRole = computed(() => (auth.user ? 'Equipe comercial' : 'Modo local'))
 
   function isActive (item: (typeof navItems)[0]) {
     if (item.exact) return route.path === item.to
@@ -64,9 +66,9 @@
       v-model="drawer"
       class="app-nav"
       :rail="rail"
-      width="268"
+      width="230"
     >
-      <div class="brand-header pa-4">
+      <div class="brand-header pa-5">
         <div class="d-flex align-center ga-3">
           <div class="brand-logo-wrap" :class="{ 'brand-logo-wrap--rail': rail }">
             <img
@@ -77,8 +79,8 @@
           </div>
 
           <div v-if="!rail" class="overflow-hidden">
-            <div class="brand-wordmark text-white">
-              Ipanema
+            <div class="brand-wordmark">
+              IPANEMA
             </div>
             <div class="text-caption brand-subtitle">
               CRM 2.0
@@ -87,20 +89,23 @@
         </div>
       </div>
 
-      <v-divider class="border-opacity-25" />
+      <v-divider />
 
-      <v-list class="px-2 py-3" density="comfortable" nav>
+      <v-list class="px-3 py-2" density="comfortable" nav>
         <v-list-item
           v-for="item in navItems"
           :key="item.to"
           :active="isActive(item)"
           class="mb-1 nav-item"
           :class="{ 'nav-item--active': isActive(item) }"
-          :prepend-icon="item.icon"
           rounded="lg"
           :title="item.title"
           :to="item.to"
         >
+          <template #prepend>
+            <span class="nav-dot" :class="{ 'nav-dot--active': isActive(item) }" />
+          </template>
+
           <template v-if="item.to === '/alertas' && dashboard.alertasNaoLidos" #append>
             <v-badge
               color="primary"
@@ -113,9 +118,14 @@
 
       <template #append>
         <div class="pa-3">
+          <div v-if="!rail" class="user-card mb-2">
+            <div class="text-body-2 font-weight-semibold">{{ userName }}</div>
+            <div class="text-caption user-role">{{ userRole }}</div>
+          </div>
+
           <v-btn
             block
-            color="white"
+            color="secondary"
             :prepend-icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
             variant="text"
             @click="rail = !rail"
@@ -211,42 +221,22 @@
 }
 
 .app-nav {
-  border-right: none !important;
-  background: #000 !important;
-  color: #fff !important;
-}
-
-.app-nav :deep(.v-list),
-.app-nav :deep(.v-list-item-title),
-.app-nav :deep(.v-icon),
-.app-nav :deep(.v-btn) {
-  color: rgba(255, 255, 255, 0.88) !important;
-}
-
-.app-nav :deep(.v-divider) {
-  border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-.brand-header {
-  background: linear-gradient(180deg, rgba(198, 31, 62, 0.22), transparent);
+  background: #fff !important;
+  border-right: 1px solid #e6e8ec !important;
 }
 
 .brand-logo-wrap {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
-  background: #000;
-  padding: 4px;
   overflow: hidden;
-  border: 1px solid rgba(198, 31, 62, 0.35);
 }
 
 .brand-logo-wrap--rail {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
 }
 
 .brand-logo {
@@ -255,27 +245,51 @@
   object-fit: contain;
 }
 
+.brand-wordmark {
+  font-weight: 700;
+  font-size: 15px;
+  color: #1e2329;
+  line-height: 1.1;
+}
+
 .brand-subtitle {
-  color: rgba(255, 255, 255, 0.65);
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
+  color: #c61f3e;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.nav-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #cbd2d9;
+  margin-right: 8px;
+}
+
+.nav-dot--active {
+  background: #c61f3e;
 }
 
 .nav-item {
-  opacity: 0.9;
+  color: #667085;
+  font-weight: 500;
 }
 
-.nav-item--active,
-.app-nav :deep(.nav-item--active) {
-  background: rgba(198, 31, 62, 0.22) !important;
-}
-
-.nav-item--active :deep(.v-list-item-title),
-.nav-item--active :deep(.v-icon),
-.app-nav :deep(.nav-item--active .v-list-item-title),
-.app-nav :deep(.nav-item--active .v-icon) {
+.nav-item--active {
+  background: #fcecef !important;
   color: #c61f3e !important;
   font-weight: 600;
+}
+
+.user-card {
+  background: #f7f8fa;
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.user-role {
+  color: #667085;
 }
 
 .app-bar {
