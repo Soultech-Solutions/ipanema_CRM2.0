@@ -73,8 +73,7 @@ const router = createRouter({
         {
           path: 'portais',
           name: 'portals',
-          component: () => import('@/views/PlaceholderView.vue'),
-          props: { title: 'Portais', icon: 'mdi-account-network-outline', description: 'Respostas assistidas por IA via portal do cliente.' },
+          component: () => import('@/views/PortalRespostaView.vue'),
           meta: { title: 'Portais', icon: 'mdi-account-network-outline' },
         },
         {
