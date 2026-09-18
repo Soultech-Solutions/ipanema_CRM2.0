@@ -66,8 +66,7 @@ const router = createRouter({
         {
           path: 'produtos',
           name: 'products',
-          component: () => import('@/views/PlaceholderView.vue'),
-          props: { title: 'Produtos & preços', icon: 'mdi-tag-multiple-outline', description: 'Catálogo de produtos, preços e o "de-para" de nomes usados pelos clientes.' },
+          component: () => import('@/views/ProdutosView.vue'),
           meta: { title: 'Produtos & preços', icon: 'mdi-tag-multiple-outline' },
         },
         {
