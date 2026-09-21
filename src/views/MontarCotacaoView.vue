@@ -137,8 +137,8 @@
           </div>
 
           <v-btn block class="mb-2" color="primary" rounded="lg" @click="router.push('/proposta')">Gerar PDF da proposta</v-btn>
-          <v-btn block class="mb-2" color="secondary" rounded="lg" variant="outlined">Pré-visualizar e-mail</v-btn>
-          <v-btn block color="secondary" rounded="lg" variant="outlined">Enviar pelo Outlook</v-btn>
+          <v-btn block class="mb-2" color="secondary" rounded="lg">Pré-visualizar e-mail</v-btn>
+          <v-btn block color="success" rounded="lg">Enviar pelo Outlook</v-btn>
         </v-card>
       </v-col>
     </v-row>
