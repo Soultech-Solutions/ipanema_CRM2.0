@@ -21,7 +21,8 @@
     return Math.round((soma / clients.length) * 100)
   })
 
-  const clientesAtencaoCount = computed(() => store.clientesRisco?.length ?? 0)
+  const clientesAtencaoCount = computed(() =>
+    commercial.clients.filter(c => c.status === 'risco').length)
 
   type Tone = 'error' | 'warning' | 'success' | 'info'
 
@@ -35,6 +36,13 @@
     if (tipo === 'risco' || tipo === 'alerta') return 'error'
     if (tipo === 'oportunidade') return 'success'
     return 'info'
+  }
+
+  function insightLabel (tipo: string): string {
+    if (tipo === 'risco') return 'Risco'
+    if (tipo === 'alerta') return 'Alerta'
+    if (tipo === 'oportunidade') return 'Oportunidade'
+    return 'Análise'
   }
 
   /** Motivo de atenção do cliente, derivado de dados reais (sem inventar número) */
@@ -171,8 +179,9 @@
               size="small"
               variant="tonal"
             >
-              {{ ins.titulo }}
+              {{ insightLabel(ins.tipo) }}
             </v-chip>
+            <div class="text-body-2 font-weight-medium ia-insight-text mb-1">{{ ins.titulo }}</div>
             <div class="text-caption ia-insight-text">{{ ins.descricao }}</div>
           </v-card>
 
@@ -198,10 +207,10 @@
                     size="small"
                     variant="tonal"
                   >
-                    {{ rec.titulo }}
+                    {{ rec.acao }}
                   </v-chip>
                   <span class="text-caption">
-                    {{ rec.clienteNome || 'Carteira geral' }}
+                    {{ rec.titulo }} — {{ rec.clienteNome || 'Carteira geral' }}
                     <template v-if="rec.impactoEstimado"> • {{ formatCurrency(rec.impactoEstimado, true) }}</template>
                   </span>
                 </div>
