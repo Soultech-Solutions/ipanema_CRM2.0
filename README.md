@@ -25,11 +25,11 @@ npm run directus:bootstrap
 
 Default admin: `admin@example.com` / `admin123` (change in `.env`).
 
-Frontend base path: **`/raca-comercial/`** (see `vite.config.mts`).  
-Dev URL: http://localhost:3000/raca-comercial/
+Frontend base path: **`/ipanema_crm2/`** (see `vite.config.mts`).  
+Dev URL: http://localhost:3000/ipanema_crm2/
 
 Set `VITE_USE_MOCK=false` in `.env` (and recreate the frontend container) to hit Directus instead of mock data.  
-With Directus mode, the app requires **login** at `/raca-comercial/login` using a Directus user.
+With Directus mode, the app requires **login** at `/ipanema_crm2/login` using a Directus user.
 
 ## Local frontend + Docker backend
 
@@ -100,6 +100,24 @@ VITE_DIRECTUS_TOKEN=your_static_token
 ```
 
 3. Upload the Excel in the app — progress shows clear/create batches for `ctes`, `clientes`, KPIs, etc.
+
+## Production deploy (frontend)
+
+The production build is served from **`/ipanema_crm2/`**. Copy the contents of `dist/` into that folder on the web server:
+
+```bash
+npm run build
+# rsync -avz --delete dist/ user@host:/var/www/html/ipanema_crm2/
+```
+
+SPA history mode needs a fallback to `index.html` under that prefix, for example in nginx:
+
+```nginx
+location /ipanema_crm2/ {
+  root /var/www/html;
+  try_files $uri $uri/ /ipanema_crm2/index.html;
+}
+```
 
 ## Production deploy (API)
 

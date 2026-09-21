@@ -6,7 +6,7 @@
 - Keep code in TypeScript unless migration is required.
 
 ## Stack
-- Framework: Vue 3 + Vite (base path `/raca-comercial/`)
+- Framework: Vue 3 + Vite (base path `/ipanema_crm2/`)
 - UI Library: Vuetify
 - Backend: Directus + Redis (Compose); Postgres local via Compose profile, external on VPS
 - Enabled Features: ESLint, Vuetify MCP
