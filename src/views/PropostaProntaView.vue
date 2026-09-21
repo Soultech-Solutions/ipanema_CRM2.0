@@ -1,11 +1,4 @@
 <script lang="ts" setup>
-  import { ref } from 'vue'
-  import { useRouter } from 'vue-router'
-
-  const router = useRouter()
-
-  const canal = ref('email')
-
   const itens = [
     { produto: 'FAG 22320-E1-K', qtd: 10, unitario: 'R$ 4.280', total: 'R$ 42.800' },
     { produto: 'INA NK45/20', qtd: 8, unitario: 'R$ 682', total: 'R$ 5.456' },
@@ -26,23 +19,17 @@
       </div>
 
       <div class="d-flex ga-2">
-        <v-btn color="secondary" rounded="lg" variant="outlined" @click="router.push('/cotacao')">
-          Voltar e editar
-        </v-btn>
-        <v-btn color="primary" rounded="lg" variant="flat">Enviar proposta</v-btn>
+        <v-btn color="secondary" rounded="lg" variant="outlined">Exportar</v-btn>
+        <v-btn color="primary" rounded="lg" variant="flat">+ Nova oportunidade</v-btn>
       </div>
     </div>
-
-    <v-alert class="mb-4" density="compact" type="info" variant="tonal">
-      Tela de exemplo — layout baseado num preview parcial do Figma (não foi possível confirmar a estrutura completa por limite de uso da API).
-    </v-alert>
 
     <v-row>
       <!-- Preview do PDF -->
       <v-col cols="12" lg="7">
         <v-card class="pa-6" rounded="xl" variant="outlined">
           <div class="text-h6 font-weight-bold" style="color: #c61f3e;">IPANEMA ROLAMENTOS</div>
-          <div class="text-caption text-medium-emphasis mb-4">PROPOSTA COMERCIAL #0842</div>
+          <div class="text-caption text-medium-emphasis mb-4">PROPOSTA COMERCIAL #9842</div>
 
           <div class="text-caption text-medium-emphasis">Cliente</div>
           <div class="text-body-1 font-weight-medium mb-4">Vale S.A.</div>
@@ -84,28 +71,33 @@
         </v-card>
       </v-col>
 
-      <!-- Canal e envio -->
+      <!-- Mensagem ao cliente -->
       <v-col cols="12" lg="5">
-        <v-card class="pa-4" rounded="xl" variant="outlined">
-          <div class="text-subtitle-1 font-weight-bold mb-3">Canal de envio</div>
+        <v-card class="pa-5" rounded="xl" variant="outlined">
+          <v-chip class="mb-3" color="warning" rounded="pill" size="small" variant="tonal">
+            Canal sugerido: Portal do cliente
+          </v-chip>
 
-          <v-radio-group v-model="canal" class="mb-2" density="comfortable" hide-details>
-            <v-radio label="E-mail" value="email" />
-            <v-radio label="Portal do cliente" value="portal" />
-            <v-radio label="Outlook (com acompanhamento)" value="outlook" />
-          </v-radio-group>
+          <div class="text-subtitle-1 font-weight-bold mb-4">Mensagem ao cliente</div>
 
-          <v-divider class="my-4" />
+          <div class="text-caption text-medium-emphasis">Para</div>
+          <div class="text-body-2 font-weight-medium mb-3">compras@vale.com</div>
 
-          <div class="text-subtitle-1 font-weight-bold mb-2">Corpo do e-mail</div>
-          <v-textarea
-            model-value="Olá, segue nossa proposta comercial conforme solicitado. Qualquer dúvida, estou à disposição."
-            rows="4"
-            variant="outlined"
-          />
+          <div class="text-caption text-medium-emphasis">Assunto</div>
+          <div class="text-body-2 font-weight-medium mb-3">Proposta Ipanema #9842</div>
 
-          <v-btn block class="mb-2" color="primary" rounded="lg">Enviar proposta</v-btn>
-          <v-btn block color="secondary" rounded="lg" variant="outlined">Baixar PDF</v-btn>
+          <div class="text-body-2 mb-4">
+            Olá, segue nossa proposta para os itens solicitados.
+            Também disponibilizamos abaixo o resumo da cotação para facilitar sua conferência.
+            Fico à disposição.
+          </div>
+
+          <v-chip class="mb-4" color="info" rounded="pill" size="small" variant="tonal">
+            Anexo: Proposta_9842.pdf
+          </v-chip>
+
+          <v-btn block class="mb-2" color="primary" rounded="lg">Enviar e-mail</v-btn>
+          <v-btn block color="secondary" rounded="lg" variant="outlined">Abrir portal do cliente</v-btn>
         </v-card>
       </v-col>
     </v-row>
