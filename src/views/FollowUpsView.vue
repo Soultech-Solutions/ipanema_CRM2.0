@@ -57,7 +57,7 @@
     </div>
 
     <v-alert class="mb-4" density="compact" type="info" variant="tonal">
-      Tela de exemplo — ainda não conectada a follow-ups reais. Layout segue o Figma (cores desta tela específica não puderam ser confirmadas pixel a pixel — limite de uso do Figma atingido).
+      Tela de exemplo — ainda não conectada a follow-ups reais. Layout segue o Figma.
     </v-alert>
 
     <!-- Métricas -->
