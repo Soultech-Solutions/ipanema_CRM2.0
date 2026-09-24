@@ -13,7 +13,11 @@ export const useClientsStore = defineStore('clients', () => {
     loading.value = true
     error.value = null
     try {
-      list.value = await fetchClients()
+      const clients = await fetchClients()
+      // Mostra primeiro os clientes com maior receita em risco (mesmo critério
+      // já usado em "Clientes que merecem atenção" na Visão comercial) —
+      // evita que contas antigas/zeradas apareçam por padrão no topo da lista.
+      list.value = [...clients].sort((a, b) => b.receitaEmRisco - a.receitaEmRisco)
     } catch (error_) {
       error.value = error_ instanceof Error ? error_.message : 'Erro ao carregar clientes'
     } finally {
