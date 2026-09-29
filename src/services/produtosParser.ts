@@ -60,13 +60,16 @@ export async function parseProductsFile (file: File): Promise<ParsedSheet> {
 
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1, defval: '', blankrows: false })
   const headerIdx = findHeaderRow(matrix)
-  const headers = (matrix[headerIdx] ?? []).map((h, i) => String(h ?? '').trim() || `Coluna ${i + 1}`)
+  const columns = (matrix[headerIdx] ?? [])
+    .map((h, index) => ({ name: String(h ?? '').trim(), index }))
+    .filter(c => c.name)
+  const headers = columns.map(c => c.name)
 
   const rows = matrix.slice(headerIdx + 1)
     .filter(r => r.some(v => v !== '' && v != null))
-    .map(r => Object.fromEntries(headers.map((h, i) => {
-      const v = r[i]
-      return [h, v instanceof Date ? v.toISOString().slice(0, 10) : v ?? '']
+    .map(r => Object.fromEntries(columns.map(({ name, index }) => {
+      const v = r[index]
+      return [name, v instanceof Date ? v.toISOString().slice(0, 10) : v ?? '']
     })))
 
   return { sheetName, headers, rows }

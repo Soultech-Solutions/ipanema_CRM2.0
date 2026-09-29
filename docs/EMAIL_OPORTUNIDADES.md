@@ -111,6 +111,7 @@ Os `.eml` ficam em `docs/exemplos/emails/`, o catálogo em `docs/exemplos/produt
 | `MAIL_PROCESSED_FOLDER` | vazio | Pasta de destino após processar |
 | `EMAIL_MAX_ATTACHMENTS` | `5` | Anexos lidos por email |
 | `EMAIL_MAX_ATTACHMENT_MB` | `10` | Tamanho máximo por anexo |
+| `EMAIL_PRICE_MARKUP_PCT` | `40` | Markup sobre o último custo (`custo`) para sugerir preço quando o produto não tem `preco` |
 | `EMAIL_EXTRACTOR_MODEL` | `ANTHROPIC_MODEL` | Modelo da extração |
 | `EMAIL_EXTRACTOR_MAX_TOKENS` | `4096` | |
 | `EMAIL_EXTRACTOR_MAX_TOOL_ROUNDS` | `10` | Rodadas de tool-use antes de forçar `emit_extraction` |

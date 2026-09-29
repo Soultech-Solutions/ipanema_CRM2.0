@@ -36,6 +36,8 @@ export interface ExtensionConfig {
   }
   maxAttachments: number
   maxAttachmentBytes: number
+  /** % sobre o último custo para sugerir preço quando o produto não tem preço base. */
+  priceMarkupPct: number
   redisUrl: string | null
   storage: string
 }
@@ -43,6 +45,11 @@ export interface ExtensionConfig {
 function int (value: string | undefined, fallback: number): number {
   const n = Number(value)
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback
+}
+
+function percent (value: string | undefined, fallback: number): number {
+  const n = Number(value?.replace(',', '.'))
+  return value != null && Number.isFinite(n) && n >= 0 ? n : fallback
 }
 
 export function loadConfig (rawEnv: Env): ExtensionConfig {
@@ -83,6 +90,7 @@ export function loadConfig (rawEnv: Env): ExtensionConfig {
     },
     maxAttachments: int(env.EMAIL_MAX_ATTACHMENTS, 5),
     maxAttachmentBytes: int(env.EMAIL_MAX_ATTACHMENT_MB, 10) * 1024 * 1024,
+    priceMarkupPct: percent(env.EMAIL_PRICE_MARKUP_PCT, 40),
     redisUrl: env.REDIS || null,
     storage: (env.STORAGE_LOCATIONS || 'local').split(',', 1)[0]!.trim() || 'local',
   }

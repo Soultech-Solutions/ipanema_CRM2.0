@@ -26,6 +26,7 @@ export interface ProductSummary {
   marca: string | null
   unidade: string | null
   preco: number | null
+  custo?: number | null
   estoque: number | null
   atributos?: Record<string, unknown> | null
 }

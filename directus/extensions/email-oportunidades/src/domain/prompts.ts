@@ -16,10 +16,14 @@ Passos:
      várias marcas (ex.: 6205 NTN e 6205 SKF): se o cliente indicou a marca, escolha a dela; senão escolha a
      mais provável (estoque, venda recente) e coloque as outras marcas em alternativas com confiança até 0.7.
      Use os atributos (família comercial, última venda) para desempatar.
+   - Se a marca/sufixo pedido não existir mas houver a mesma série e medida de outro fabricante
+     (ex.: NU 222 ECP SKF ≈ NU222E.TVP2 FAG; sufixos de gaiola/folga mudam entre marcas), escolha o
+     equivalente mais provável com confiança até 0.6 e liste os demais em alternativas — o vendedor revisa.
+     Use produto_id=null só quando nenhum candidato for da mesma série/medida.
    - Escolha produto_id somente entre os ids retornados pelas buscas. Nunca invente ids.
    - Se houver mais de um candidato plausível (ex.: variações C3, 2RS x 2Z), escolha o mais provável,
      reduza a confiança e coloque os demais em alternativas.
-   - Se nada compatível existir no catálogo, use produto_id=null e confianca=0.
+   - Se nada compatível existir no catálogo (nem equivalente de outra marca), use produto_id=null e confianca=0.
 4. Extraia prazo de entrega, contato e observações comerciais (condição de pagamento, frete, local).
 5. Termine chamando emit_extraction exatamente uma vez.
 

@@ -1,6 +1,7 @@
 import type { Extraction } from '../domain/extraction'
 import type { ClientSummary, MatchStatus, ProductSummary } from '../domain/types'
 import { emailDomain } from '../domain/normalize'
+import { suggestedPrice } from '../domain/pricing'
 
 /** Abaixo disso o item vai para revisão como "ambíguo". */
 export const CONFIDENCE_THRESHOLD = 0.8
@@ -49,8 +50,9 @@ export function buildOpportunity (input: {
   from: string
   fromName: string | null
   subject: string
+  markupPct: number
 }): OpportunityDraft {
-  const { extraction, products, client } = input
+  const { extraction, products, client, markupPct } = input
 
   const items: OpportunityItemDraft[] = extraction.itens.map((item, index) => {
     const product = item.produto_id ? products.get(item.produto_id) ?? null : null
@@ -58,7 +60,7 @@ export function buildOpportunity (input: {
       .filter(id => id !== product?.id)
       .map(id => products.get(id))
       .filter((p): p is ProductSummary => p !== undefined)
-      .map(p => ({ id: p.id, codigo: p.codigo, descricao: p.descricao, preco: p.preco }))
+      .map(p => ({ id: p.id, codigo: p.codigo, descricao: p.descricao, preco: suggestedPrice(p, markupPct) }))
 
     const confianca = product ? item.confianca : 0
     let status: MatchStatus = 'nao_encontrado'
@@ -66,7 +68,7 @@ export function buildOpportunity (input: {
       status = confianca >= CONFIDENCE_THRESHOLD ? 'encontrado' : 'ambiguo'
     }
 
-    const preco = product?.preco ?? null
+    const preco = product ? suggestedPrice(product, markupPct) : null
     return {
       produto: product?.id ?? null,
       texto_original: item.texto_original,

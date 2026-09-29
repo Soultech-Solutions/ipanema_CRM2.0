@@ -5,7 +5,7 @@ import { type MappedProduct, productKey } from '../domain/product-columns'
 import { clampLimit, type RankedProduct, rankProducts, sapCode } from '../domain/ranking'
 import { num, str } from './directus'
 
-const FIELDS = ['id', 'codigo', 'codigo_sap', 'descricao', 'marca', 'unidade', 'preco', 'estoque', 'atributos']
+const FIELDS = ['id', 'codigo', 'codigo_sap', 'descricao', 'marca', 'unidade', 'preco', 'custo', 'estoque', 'atributos']
 
 export function toProductSummary (row: Row): ProductSummary {
   return {
@@ -16,6 +16,7 @@ export function toProductSummary (row: Row): ProductSummary {
     marca: str(row.marca),
     unidade: str(row.unidade),
     preco: num(row.preco),
+    custo: num(row.custo),
     estoque: num(row.estoque),
     atributos: row.atributos && typeof row.atributos === 'object' ? row.atributos as Record<string, unknown> : null,
   }
@@ -30,7 +31,7 @@ function tokenFilter (token: string): Query {
       { codigo: { _icontains: token } },
       { marca: { _icontains: token } },
       ...(code.length >= 3 ? [{ codigo_normalizado: { _contains: code } }] : []),
-      ...(sap ? [{ codigo_sap: { _eq: sap } }] : []),
+      ...(sap ? [{ codigo_sap: { _starts_with: sap } }] : []),
     ],
   }
 }
@@ -45,18 +46,18 @@ export class DirectusProductRepository implements ProductRepository {
     const code = normalizeCode(input.codigo)
     const sap = sapCode(input.codigo)
     if (sap) {
-      candidates.push(...await this.read({ codigo_sap: { _eq: sap } }, limit))
+      candidates.push(...await this.read({ codigo_sap: { _starts_with: sap } }, limit))
     }
     if (code) {
-      candidates.push(...await this.read({ codigo_normalizado: { _eq: code } }, limit))
+      candidates.push(...await this.read({ codigo_normalizado: { _eq: code } }, limit * 2))
       if (code.length >= 4) {
-        // Cliente às vezes manda o código com sufixos a mais (ex.: 22320E1KC3TVPB)
-        const prefix = code.slice(0, Math.max(4, code.length - 3))
-        const [contains, startsWith] = await Promise.all([
+        // Cliente às vezes manda o código com sufixos a mais (22320E1KC3TVPB) ou de outro fabricante (NU222ECP)
+        const prefixes = [...new Set([code.length - 2, code.length - 3].map(n => code.slice(0, Math.max(4, n))))]
+        const found = await Promise.all([
           this.read({ codigo_normalizado: { _contains: code } }, limit * 3),
-          this.read({ codigo_normalizado: { _starts_with: prefix } }, limit * 3),
+          ...prefixes.map(prefix => this.read({ codigo_normalizado: { _starts_with: prefix } }, limit * 3)),
         ])
-        candidates.push(...contains, ...startsWith)
+        candidates.push(...found.flat())
       }
     }
 

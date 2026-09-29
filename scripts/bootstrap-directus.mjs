@@ -166,7 +166,36 @@ function stringField (field, options = {}) {
       default_value: options.default ?? null,
       max_length: options.maxLength ?? 255,
       is_unique: options.unique ?? false,
+      is_indexed: options.indexed ?? false,
     },
+  }
+}
+
+/** O mesmo código pode existir em várias marcas; a chave única é o id do ERP. */
+function produtoCodeFields () {
+  return [
+    stringField('codigo', { required: true, indexed: true }),
+    stringField('codigo_normalizado', {
+      required: true,
+      indexed: true,
+      note: 'Código em maiúsculas sem espaços/hífens/pontos/barras (usado no casamento)',
+    }),
+    stringField('codigo_erp', { unique: true, maxLength: 64, note: 'Id do produto no ERP (idConversao) — chave do upsert' }),
+    stringField('codigo_sap', { indexed: true, maxLength: 64, note: 'Código de material SAP' }),
+  ]
+}
+
+function jsonField (field, options = {}) {
+  return {
+    field,
+    type: 'json',
+    meta: {
+      interface: options.interface || 'input-code',
+      special: ['cast-json'],
+      width: options.width || 'full',
+      note: options.note,
+    },
+    schema: { is_nullable: true },
   }
 }
 
@@ -563,7 +592,95 @@ async function bootstrap () {
         textField('error_message'),
       ],
     },
+    {
+      collection: 'produtos',
+      meta: { icon: 'inventory_2', note: 'Catálogo comercial importado do Excel (upsert por id do ERP ou código)' },
+      fields: [
+        ...produtoCodeFields(),
+        textField('descricao'),
+        stringField('marca'),
+        stringField('unidade', { maxLength: 32 }),
+        floatField('preco'),
+        floatField('custo'),
+        floatField('icms'),
+        floatField('pis_cofins'),
+        floatField('estoque'),
+        stringField('fonte'),
+        jsonField('atributos', { note: 'Colunas extras da planilha' }),
+        timestampField('atualizado_em', { special: ['date-updated'] }),
+      ],
+    },
+    {
+      collection: 'emails_recebidos',
+      meta: { icon: 'mail', note: 'Emails lidos da caixa comercial (IMAP / Office 365)' },
+      fields: [
+        stringField('message_id', { required: true, unique: true, maxLength: 512 }),
+        selectField('provider', ['imap', 'o365', 'fixture'], { required: true }),
+        stringField('remetente', { required: true }),
+        stringField('remetente_nome'),
+        stringField('assunto', { width: 'full', maxLength: 998 }),
+        textField('corpo_texto'),
+        timestampField('recebido_em'),
+        jsonField('anexos', { note: '[{ nome, tipo, tamanho, arquivo }] — arquivo = id em directus_files' }),
+        selectField('status', ['novo', 'processando', 'processado', 'ignorado', 'erro'], {
+          required: true,
+          default: 'novo',
+        }),
+        stringField('classificacao'),
+        textField('erro'),
+        jsonField('extracao', { note: 'Saída estruturada da IA' }),
+        m2oField('oportunidade'),
+        timestampField('created_at', { special: ['date-created'] }),
+      ],
+    },
+    {
+      collection: 'oportunidades',
+      meta: { icon: 'view_kanban', note: 'Pipeline de oportunidades' },
+      fields: [
+        stringField('titulo', { required: true, width: 'full' }),
+        m2oField('cliente'),
+        stringField('cliente_nome'),
+        stringField('contato_nome'),
+        stringField('contato_email'),
+        selectField('etapa', ['novo', 'preparando', 'pronto', 'aguardando', 'followup'], {
+          required: true,
+          default: 'novo',
+        }),
+        selectField('origem', ['email', 'manual'], { required: true, default: 'manual' }),
+        m2oField('email'),
+        stringField('prazo_entrega'),
+        floatField('valor_estimado', { default: 0 }),
+        floatField('confianca'),
+        m2oField('vendedor'),
+        textField('observacoes'),
+        timestampField('created_at', { special: ['date-created'] }),
+        timestampField('updated_at', { special: ['date-updated'] }),
+      ],
+    },
+    {
+      collection: 'oportunidade_itens',
+      meta: { icon: 'list_alt', note: 'Itens pedidos em cada oportunidade', hidden: true },
+      fields: [
+        m2oField('oportunidade', { required: true }),
+        m2oField('produto'),
+        textField('texto_original'),
+        floatField('quantidade', { default: 1 }),
+        stringField('unidade', { maxLength: 32 }),
+        floatField('preco_unitario'),
+        floatField('subtotal'),
+        floatField('confianca'),
+        selectField('status_match', ['encontrado', 'ambiguo', 'nao_encontrado'], {
+          required: true,
+          default: 'nao_encontrado',
+        }),
+        jsonField('alternativas', { note: '[{ id, codigo, descricao, preco }] candidatos do catálogo' }),
+        integerField('ordem', { default: 0 }),
+      ],
+    },
   ]
+
+  // Contêm dados de clientes/emails — sem leitura pública
+  const privateCollections = new Set(['produtos', 'emails_recebidos', 'oportunidades', 'oportunidade_itens'])
 
   for (const def of definitions) {
     if (existing.has(def.collection)) {
@@ -587,6 +704,17 @@ async function bootstrap () {
     maxLength: 128,
     note: 'filial|serie|codigo',
   }))
+
+  console.log('• ensure produtos: codigo_erp / codigo_sap / custo (codigo sem unique)')
+  for (const field of produtoCodeFields().slice(2)) {
+    await createField(token, 'produtos', field)
+  }
+  await createField(token, 'produtos', floatField('custo'))
+  await request('/fields/produtos/codigo', {
+    method: 'PATCH',
+    token,
+    body: { schema: { is_unique: false, is_indexed: true } },
+  })
 
   // Alias O2M fields on clientes expected by the API client
   console.log('• ensure relation fields on clientes')
@@ -676,12 +804,70 @@ async function bootstrap () {
     schema: { on_delete: 'CASCADE' },
   })
 
-  // Chat is private — do not expose to Public role
-  const publicCollections = definitions
-    .map(d => d.collection)
-    .filter(c => !c.startsWith('chat_'))
-  console.log('• grant Public read on collections')
-  await ensurePublicRead(token, publicCollections)
+  console.log('• ensure oportunidades relations')
+  await createField(token, 'oportunidades', {
+    field: 'itens',
+    type: 'alias',
+    meta: {
+      interface: 'list-o2m',
+      special: ['o2m'],
+      options: { template: '{{quantidade}}x {{texto_original}}' },
+    },
+  })
+  await createRelation(token, {
+    collection: 'oportunidade_itens',
+    field: 'oportunidade',
+    related_collection: 'oportunidades',
+    meta: { one_field: 'itens', sort_field: 'ordem' },
+    schema: { on_delete: 'CASCADE' },
+  })
+  await createRelation(token, {
+    collection: 'oportunidade_itens',
+    field: 'produto',
+    related_collection: 'produtos',
+    meta: { sort_field: null },
+    schema: { on_delete: 'SET NULL' },
+  })
+  await createRelation(token, {
+    collection: 'oportunidades',
+    field: 'cliente',
+    related_collection: 'clientes',
+    meta: { sort_field: null },
+    schema: { on_delete: 'SET NULL' },
+  })
+  await createRelation(token, {
+    collection: 'oportunidades',
+    field: 'vendedor',
+    related_collection: 'vendedores',
+    meta: { sort_field: null },
+    schema: { on_delete: 'SET NULL' },
+  })
+  await createRelation(token, {
+    collection: 'oportunidades',
+    field: 'email',
+    related_collection: 'emails_recebidos',
+    meta: { sort_field: null },
+    schema: { on_delete: 'SET NULL' },
+  })
+  await createRelation(token, {
+    collection: 'emails_recebidos',
+    field: 'oportunidade',
+    related_collection: 'oportunidades',
+    meta: { sort_field: null },
+    schema: { on_delete: 'SET NULL' },
+  })
+
+  // O front exige login; leitura pública só para quem pedir (ex.: demo sem login).
+  // Chat e coleções com dados de clientes/emails ficam sempre privados.
+  if (process.env.DIRECTUS_PUBLIC_READ === 'true') {
+    const publicCollections = definitions
+      .map(d => d.collection)
+      .filter(c => !c.startsWith('chat_') && !privateCollections.has(c))
+    console.log('• grant Public read on collections')
+    await ensurePublicRead(token, publicCollections)
+  } else {
+    console.log('• skip Public read (set DIRECTUS_PUBLIC_READ=true to grant)')
+  }
 
   // O2M alias for conversation → messages
   console.log('• ensure chat relation fields')

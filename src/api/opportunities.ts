@@ -87,6 +87,7 @@ export interface IngestHealth {
   provider: 'imap' | 'o365'
   cron: string
   missingConfig: string[]
+  priceMarkupPct?: number
   running: boolean
   lastRun: InboxSyncSummary | null
 }
@@ -111,7 +112,7 @@ function productSearchFilter (q: string) {
       { codigo: { _icontains: q } },
       { descricao: { _icontains: q } },
       { marca: { _icontains: q } },
-      { codigo_sap: { _eq: q } },
+      { codigo_sap: { _starts_with: q } },
       ...(code.length >= 2 ? [{ codigo_normalizado: { _contains: code } }] : []),
     ],
   }

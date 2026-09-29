@@ -26,7 +26,7 @@ export async function createContainer (ctx: DirectusContext, config: ExtensionCo
     maxAttachmentBytes: config.maxAttachmentBytes,
   }, products, clients)
 
-  const processor = new EmailProcessor({ extractor, products, emails, opportunities })
+  const processor = new EmailProcessor({ extractor, products, emails, opportunities, markupPct: config.priceMarkupPct })
 
   return { config, services, products, clients, emails, opportunities, attachments, processor, logger: ctx.logger }
 }

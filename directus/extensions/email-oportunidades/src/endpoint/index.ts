@@ -39,6 +39,7 @@ export default defineEndpoint({
         provider: config.provider,
         cron: config.pollCron,
         missingConfig: missingMailConfig(config),
+        priceMarkupPct: config.priceMarkupPct,
         running: runState.running,
         lastRun: runState.lastRun,
       })

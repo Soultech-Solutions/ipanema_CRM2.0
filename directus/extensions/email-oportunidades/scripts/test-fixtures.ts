@@ -1,11 +1,12 @@
 /**
  * Roda o extrator contra os .eml de docs/exemplos/emails sem caixa de email nem Directus.
- * Catálogo: primeiro .csv/.xlsx de docs/exemplos/produtos. Clientes: docs/exemplos/clientes.json.
+ * Catálogo: a planilha de docs/exemplos/produtos com mais produtos (ou --catalog). Clientes: docs/exemplos/clientes.json.
  *
  * Uso (na raiz do projeto):
  *   npm run email:test-fixtures              # chama o Claude (precisa de ANTHROPIC_API_KEY no .env)
  *   npm run email:test-fixtures -- --dry     # só parseia emails/anexos e testa a busca no catálogo
- *   npm run email:test-fixtures -- --only vale
+ *   npm run email:test-fixtures -- --only vale --verbose   # mostra cada search_products do Claude
+ *   npm run email:test-fixtures -- --catalog docs/exemplos/produtos/produtos-exemplo.csv
  */
 import type { ClientRepository, ClientSearchInput, ClientSummary, ProductRepository, ProductSearchInput, ProductSummary } from '../src/domain/types'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
@@ -15,7 +16,7 @@ import * as XLSX from 'xlsx'
 import { buildOpportunity } from '../src/application/build-opportunity'
 import { mapProducts } from '../src/application/import-products.use-case'
 import { loadConfig } from '../src/config'
-import { stripAccents } from '../src/domain/normalize'
+import { normalizeCode, stripAccents } from '../src/domain/normalize'
 import { clampLimit, rankProducts } from '../src/domain/ranking'
 import { QuoteExtractor } from '../src/infrastructure/anthropic.extractor'
 import { prepareAttachments } from '../src/infrastructure/attachments'
@@ -51,16 +52,10 @@ function loadEnvFile () {
   }
 }
 
-function loadCatalog (): ProductSummary[] {
-  const dir = join(EXAMPLES, 'produtos')
-  const file = readdirSync(dir).find(f => ['.csv', '.xlsx', '.xls'].includes(extname(f).toLowerCase()))
-  if (!file) {
-    throw new Error(`Nenhum catálogo .csv/.xlsx em ${dir}`)
-  }
-
-  const path = join(dir, file)
+/** Mesma leitura do front (`src/services/produtosParser.ts`): cabeçalho pode não estar na 1ª linha. */
+function readSheetRows (path: string): Record<string, unknown>[] {
   let wb: XLSX.WorkBook
-  if (extname(file).toLowerCase() === '.csv') {
+  if (extname(path).toLowerCase() === '.csv') {
     const text = readFileSync(path, 'utf8')
     const header = text.split('\n', 1)[0] ?? ''
     const FS = (header.match(/;/g)?.length ?? 0) >= (header.match(/,/g)?.length ?? 0) ? ';' : ','
@@ -68,18 +63,44 @@ function loadCatalog (): ProductSummary[] {
   } else {
     wb = XLSX.read(readFileSync(path), { type: 'buffer' })
   }
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(wb.Sheets[wb.SheetNames[0]!]!, { defval: '' })
-  const { columns, products, ignorados } = mapProducts(rows)
-  console.log(`Catálogo: ${file} — ${products.length} produtos (${ignorados} linhas sem código)`)
+  const matrix = XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[wb.SheetNames[0]!]!, { header: 1, defval: '', blankrows: false })
+  const headerIdx = Math.max(0, matrix.slice(0, 10).findIndex(r =>
+    r.filter(v => typeof v === 'string' && v.trim() && Number.isNaN(Number(v))).length >= 2))
+  const columns = (matrix[headerIdx] ?? [])
+    .map((h, index) => ({ name: String(h ?? '').trim(), index }))
+    .filter(c => c.name)
+  return matrix.slice(headerIdx + 1)
+    .filter(r => r.some(v => v !== '' && v != null))
+    .map(r => Object.fromEntries(columns.map(({ name, index }) => [name, r[index] ?? ''])))
+}
+
+/** `--catalog <arquivo>` ou, por padrão, a planilha de docs/exemplos/produtos que rende mais produtos. */
+function loadCatalog (): ProductSummary[] {
+  const dir = join(EXAMPLES, 'produtos')
+  const catalogIdx = args.indexOf('--catalog')
+  const candidates = catalogIdx === -1
+    ? readdirSync(dir).filter(f => ['.csv', '.xlsx', '.xls'].includes(extname(f).toLowerCase())).map(f => join(dir, f))
+    : [resolve(ROOT, args[catalogIdx + 1] ?? '')]
+  if (candidates.length === 0) {
+    throw new Error(`Nenhum catálogo .csv/.xlsx em ${dir}`)
+  }
+
+  const parsed = candidates
+    .map(path => ({ path, ...mapProducts(readSheetRows(path)) }))
+    .toSorted((a, b) => b.products.length - a.products.length)
+  const { path, columns, products, ignorados } = parsed[0]!
+  console.log(`Catálogo: ${path.slice(dir.length + 1) || path} — ${products.length} produtos (${ignorados} linhas sem código)`)
   console.log(`  mapeamento: ${JSON.stringify(columns.mapping)}${columns.unmapped.length > 0 ? ` | extras: ${columns.unmapped.join(', ')}` : ''}`)
 
   return products.map((p, i) => ({
     id: `prod-${i + 1}`,
     codigo: p.codigo,
+    codigo_sap: p.codigo_sap,
     descricao: p.descricao,
     marca: p.marca,
     unidade: p.unidade,
     preco: p.preco,
+    custo: p.custo,
     estoque: p.estoque,
     atributos: p.atributos,
   }))
@@ -88,7 +109,11 @@ function loadCatalog (): ProductSummary[] {
 class MemoryProducts implements ProductRepository {
   constructor (private all: ProductSummary[]) {}
   async search (input: ProductSearchInput) {
-    return rankProducts(this.all, input, clampLimit(input.limit))
+    const found = rankProducts(this.all, input, clampLimit(input.limit))
+    if (args.includes('--verbose')) {
+      console.log(`     search_products ${JSON.stringify(input)} → ${found.map(p => `${p.codigo} [${p.marca}] (${p.score})`).join(', ') || 'nada'}`)
+    }
+    return found
   }
 
   async getByIds (ids: string[]) {
@@ -132,6 +157,7 @@ async function main () {
   const config = loadConfig(process.env)
   const catalog = loadCatalog()
   const byId = new Map(catalog.map(p => [p.id, p]))
+  const catalogCodes = new Set(catalog.map(p => normalizeCode(p.codigo)))
   const products = new MemoryProducts(catalog)
   const clients = new MemoryClients(loadClients())
   const expected = loadExpected()
@@ -187,6 +213,7 @@ async function main () {
       from: mail.from,
       fromName: mail.fromName,
       subject: mail.subject,
+      markupPct: config.priceMarkupPct,
     })
 
     const secs = ((Date.now() - started) / 1000).toFixed(1)
@@ -210,9 +237,18 @@ async function main () {
       problems.push(`classificação esperada ${exp.is_quote_request}`)
     }
     for (const e of exp.itens) {
+      const wanted = e.codigo ? normalizeCode(e.codigo) : null
+      // Código fora do catálogo carregado: só confere que o item (quantidade) foi extraído
+      const inCatalog = wanted != null && catalogCodes.has(wanted)
       const found = draft.items.some(item => {
-        const code = item.produto ? byId.get(item.produto)?.codigo ?? null : null
-        return code === e.codigo && item.quantidade === e.quantidade
+        if (item.quantidade !== e.quantidade) {
+          return false
+        }
+        if (!inCatalog) {
+          return wanted != null || item.produto == null
+        }
+        const ids = [item.produto, ...item.alternativas.map(a => a.id)]
+        return ids.some(id => id != null && normalizeCode(byId.get(id)?.codigo) === wanted)
       })
       if (!found) {
         problems.push(`faltou ${e.quantidade}x ${e.codigo ?? '(não catalogado)'}`)

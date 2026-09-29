@@ -17,6 +17,7 @@ export class EmailProcessor {
     products: ProductRepository
     emails: EmailRepository
     opportunities: OpportunityRepository
+    markupPct: number
   }) {}
 
   async process (emailId: string, mail: MailInput, existingOpportunityId?: string | null): Promise<ProcessOutcome> {
@@ -56,6 +57,7 @@ export class EmailProcessor {
       from: mail.from,
       fromName: mail.fromName,
       subject: mail.subject,
+      markupPct: this.deps.markupPct,
     })
 
     const opportunityId = await opportunities.save(draft, existingOpportunityId)

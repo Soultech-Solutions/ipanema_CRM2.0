@@ -30,14 +30,19 @@
 
   const fieldLabels: Record<string, string> = {
     codigo: 'Código',
+    codigo_erp: 'Id ERP',
+    codigo_sap: 'Código SAP',
     descricao: 'Descrição',
     marca: 'Marca',
     unidade: 'Unidade',
     preco: 'Preço',
+    custo: 'Último preço de compra',
     icms: 'ICMS',
     pis_cofins: 'PIS/COFINS',
     estoque: 'Estoque',
   }
+
+  const showTaxes = computed(() => produtos.value.some(p => p.icms != null || p.pis_cofins != null))
 
   function money (value: number | null) {
     return value == null ? '—' : value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -267,11 +272,17 @@
         <thead>
           <tr>
             <th>Código</th>
+            <th>SAP</th>
             <th>Descrição</th>
             <th>Marca</th>
             <th>Preço base</th>
-            <th>ICMS</th>
-            <th>PIS/COFINS</th>
+            <th>Últ. compra</th>
+
+            <template v-if="showTaxes">
+              <th>ICMS</th>
+              <th>PIS/COFINS</th>
+            </template>
+
             <th>Estoque</th>
             <th>Fonte</th>
           </tr>
@@ -280,17 +291,23 @@
         <tbody>
           <tr v-for="p in produtos" :key="p.id">
             <td class="font-weight-medium">{{ p.codigo }}</td>
+            <td>{{ p.codigo_sap || '—' }}</td>
             <td>{{ p.descricao || '—' }}</td>
             <td>{{ p.marca || '—' }}</td>
             <td>{{ money(p.preco) }}</td>
-            <td>{{ percent(p.icms) }}</td>
-            <td>{{ percent(p.pis_cofins) }}</td>
+            <td>{{ money(p.custo ?? null) }}</td>
+
+            <template v-if="showTaxes">
+              <td>{{ percent(p.icms) }}</td>
+              <td>{{ percent(p.pis_cofins) }}</td>
+            </template>
+
             <td>{{ p.estoque ?? '—' }}</td>
             <td class="text-caption">{{ p.fonte || '—' }}</td>
           </tr>
 
           <tr v-if="!loading && produtos.length === 0">
-            <td class="text-center text-medium-emphasis py-6" colspan="8">
+            <td class="text-center text-medium-emphasis py-6" :colspan="showTaxes ? 10 : 8">
               {{ busca ? 'Nenhum produto encontrado' : 'Nenhum produto importado ainda' }}
             </td>
           </tr>

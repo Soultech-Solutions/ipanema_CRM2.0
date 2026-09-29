@@ -271,6 +271,10 @@
                       variant="outlined"
                       @change="onPrice(item, ($event.target as HTMLInputElement).value)"
                     />
+
+                    <div v-if="item.produto?.custo" class="text-caption text-medium-emphasis mt-1">
+                      Últ. compra {{ money(item.produto.custo) }}
+                    </div>
                   </td>
 
                   <td class="text-right font-weight-medium">{{ money(item.subtotal) }}</td>

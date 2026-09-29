@@ -13,6 +13,7 @@ import { computed, ref } from 'vue'
 import {
   apiErrorMessage,
   fetchInboxEmails,
+  fetchIngestHealth,
   fetchOpportunities,
   fetchOpportunity,
   opportunitiesEnabled,
@@ -26,8 +27,21 @@ import {
 
 const POLL_INTERVAL_MS = 60_000
 
+const DEFAULT_MARKUP_PCT = 40
+
 function round2 (value: number) {
   return Math.round(value * 100) / 100
+}
+
+/** Mesma regra do backend: preço base ou último custo + markup. */
+function suggestedPrice (produto: Product, markupPct: number) {
+  if (produto.preco != null) {
+    return produto.preco
+  }
+  if (produto.custo == null || produto.custo <= 0) {
+    return null
+  }
+  return round2(produto.custo * (1 + markupPct / 100))
 }
 
 export const useOpportunitiesStore = defineStore('opportunities', () => {
@@ -39,6 +53,8 @@ export const useOpportunitiesStore = defineStore('opportunities', () => {
   const syncing = ref(false)
   const error = ref<string | null>(null)
   const lastSync = ref<InboxSyncSummary | null>(null)
+  const markupPct = ref(DEFAULT_MARKUP_PCT)
+  let markupLoaded = false
   let pollTimer: ReturnType<typeof setInterval> | null = null
 
   const enabled = computed(() => opportunitiesEnabled)
@@ -95,12 +111,24 @@ export const useOpportunitiesStore = defineStore('opportunities', () => {
     }
   }
 
+  async function loadMarkup () {
+    if (markupLoaded) {
+      return
+    }
+    const health = await fetchIngestHealth().catch(() => null)
+    if (typeof health?.priceMarkupPct === 'number') {
+      markupPct.value = health.priceMarkupPct
+      markupLoaded = true
+    }
+  }
+
   async function loadById (id: string) {
     loading.value = true
     error.value = null
     current.value = null
     try {
-      current.value = await fetchOpportunity(id)
+      const [opportunity] = await Promise.all([fetchOpportunity(id), loadMarkup()])
+      current.value = opportunity
     } catch (error_) {
       error.value = apiErrorMessage(error_, 'Oportunidade não encontrada')
     } finally {
@@ -122,7 +150,7 @@ export const useOpportunitiesStore = defineStore('opportunities', () => {
     const produto = patch.produto === undefined ? item.produto : patch.produto
     let preco = patch.preco_unitario === undefined ? item.preco_unitario : patch.preco_unitario
     if (patch.produto !== undefined) {
-      preco = produto?.preco ?? null
+      preco = produto ? suggestedPrice(produto, markupPct.value) : null
     }
 
     const subtotal = preco == null ? null : round2(preco * quantidade)
