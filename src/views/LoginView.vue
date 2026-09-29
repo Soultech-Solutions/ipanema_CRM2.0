@@ -1,7 +1,7 @@
 <script lang="ts" setup>
   import { onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
-  import logoRaca from '@/assets/logo-raca.png'
+  import logoIpanema from '@/assets/logo-ipanema.png'
   import { useAuthStore } from '@/stores/auth'
 
   const auth = useAuthStore()
@@ -35,15 +35,15 @@
     <div class="login-panel">
       <div class="login-brand mb-8">
         <img
-          :src="logoRaca"
-          alt="Ipanema rolamentos"
+          :src="logoIpanema"
+          alt="Ipanema Rolamentos"
           class="login-logo mb-4"
         >
         <h1 class="brand-wordmark login-title">
-          Raça
+          IPANEMA
         </h1>
         <p class="login-subtitle mb-0">
-          Analista comercial
+          CRM 2.0
         </p>
       </div>
 

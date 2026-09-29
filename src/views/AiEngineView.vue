@@ -48,7 +48,7 @@
       rounded="lg"
       variant="tonal"
     >
-      Conectada ao sistema da Raça via API. Dashboard + alertas + insights.
+      Conectada ao sistema da Ipanema via API. Dashboard + alertas + insights.
     </v-alert>
 
     <v-row class="mb-4">

@@ -96,7 +96,7 @@
           </v-avatar>
           <div>
             <div class="text-subtitle-2 font-weight-bold text-white">
-              Raça · Analista virtual
+              Ipanema · Analista virtual
             </div>
             <div class="text-caption" style="color: rgba(255,255,255,0.65)">
               Endpoint futuro: <code style="color: #ff8a80">POST /analista-comercial/ask</code>

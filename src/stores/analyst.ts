@@ -20,7 +20,7 @@ export const useAnalystStore = defineStore('analyst', () => {
     {
       id: 'welcome',
       role: 'assistant',
-      content: 'Sou o **Analista Comercial** da Raça. Pergunte sobre riscos, oportunidades, prioridades ou indicadores da carteira — vou consultar a base e responder com dados.',
+      content: 'Sou o **Analista Comercial** da Ipanema. Pergunte sobre riscos, oportunidades, prioridades ou indicadores da carteira — vou consultar a base e responder com dados.',
       createdAt: new Date().toISOString(),
     },
   ])
