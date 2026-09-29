@@ -32,6 +32,7 @@ coverage
 .env.*.local
 .env.production
 !.env.production.example
+Untitled
 
 # Directus runtime data
 directus/uploads/*
@@ -42,13 +43,18 @@ directus/extensions/*
 !directus/extensions/.gitkeep
 !directus/extensions/analista-comercial/
 !directus/extensions/analista-comercial/**
+!directus/extensions/email-oportunidades/
+!directus/extensions/email-oportunidades/**
 
 # Re-ignore deps (the `!**` above would otherwise re-include node_modules)
 directus/extensions/analista-comercial/node_modules/
+directus/extensions/email-oportunidades/node_modules/
 
 # Keep built bundle for Docker mount (global `dist` rule would hide it)
 !directus/extensions/analista-comercial/dist/
 !directus/extensions/analista-comercial/dist/**
+!directus/extensions/email-oportunidades/dist/
+!directus/extensions/email-oportunidades/dist/**
 
 directus/snapshots/*.yaml
 directus/snapshots/*.yml

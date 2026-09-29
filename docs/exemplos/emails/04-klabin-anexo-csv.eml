@@ -1,0 +1,33 @@
+From: "Suprimentos Klabin" <suprimentos@klabin.com.br>
+To: comercial@ipanemarolamentos.com.br
+Subject: =?UTF-8?Q?RFQ_=E2=80=93_parada_programada_setembro?=
+Date: Tue, 22 Sep 2026 09:18:00 -0300
+Message-ID: <fixture-04-klabin-rfq-parada@klabin.com.br>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="----=_Part_KLABIN"
+
+------=_Part_KLABIN
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
+Prezados,
+
+Segue em anexo a lista de itens para cotação da parada programada de outubro (unidade Telêmaco Borba).
+Precisamos de retorno com prazo e condições até sexta-feira (02/10/2026).
+
+Obrigada,
+Fernanda Alves
+Suprimentos - Klabin
+
+------=_Part_KLABIN
+Content-Type: text/csv; charset="UTF-8"; name="RFQ_Klabin_parada.csv"
+Content-Disposition: attachment; filename="RFQ_Klabin_parada.csv"
+Content-Transfer-Encoding: 8bit
+
+Item;Descricao;Qtd;Un
+1;ROLAMENTO 22320 E1 K FAG;6;PC
+2;ROLAMENTO NU222ECP SKF;4;PC
+3;ROLAMENTO 6205 2RS;20;PC
+4;RETENTOR 45X62X8;10;PC
+
+------=_Part_KLABIN--

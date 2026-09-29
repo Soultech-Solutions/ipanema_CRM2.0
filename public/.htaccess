@@ -1,0 +1,9 @@
+# SPA fallback for the Vue router (history mode) under /ipanema_crm2/
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /ipanema_crm2/
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /ipanema_crm2/index.html [L]
+</IfModule>

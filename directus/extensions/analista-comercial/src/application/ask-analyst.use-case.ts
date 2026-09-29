@@ -11,12 +11,16 @@ type DirectusContext = {
       createOne: (data: Record<string, unknown>) => Promise<string | { id: string }>
       readOne: (id: string, query?: Record<string, unknown>) => Promise<unknown>
       readByQuery: (query: Record<string, unknown>) => Promise<unknown[]>
-      updateOne?: (id: string, data: Record<string, unknown>) => Promise<unknown>
+      updateOne: (id: string, data: Record<string, unknown>) => Promise<unknown>
     }
   }
   getSchema: () => Promise<unknown>
   env: Record<string, string | undefined>
-  logger: { info: Function, warn: Function, error: Function }
+  logger: {
+    info: (...args: unknown[]) => void
+    warn: (...args: unknown[]) => void
+    error: (...args: unknown[]) => void
+  }
 }
 
 export class AskAnalystUseCase {

@@ -34,6 +34,12 @@ const router = createRouter({
           meta: { title: 'Pipeline', icon: 'mdi-view-column-outline' },
         },
         {
+          path: 'oportunidades/:id',
+          name: 'opportunity-detail',
+          component: () => import('@/views/OportunidadeDetailView.vue'),
+          meta: { title: 'Oportunidade' },
+        },
+        {
           path: 'follow-ups',
           name: 'follow-ups',
           component: () => import('@/views/FollowUpsView.vue'),
@@ -136,7 +142,9 @@ router.beforeEach(async to => {
 
   if (to.name === 'login' && auth.isAuthenticated) {
     const ok = await auth.hydrate()
-    if (ok) return { path: '/' }
+    if (ok) {
+      return { path: '/' }
+    }
   }
 
   if (requiresAuth && auth.isAuthenticated && !auth.user) {
@@ -149,7 +157,9 @@ router.beforeEach(async to => {
     }
   }
 
-  if (isPublic) return true
+  if (isPublic) {
+    return true
+  }
   return true
 })
 

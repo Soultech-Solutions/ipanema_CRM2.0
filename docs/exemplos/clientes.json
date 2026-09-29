@@ -1,0 +1,6 @@
+[
+  { "id": "cli-vale", "codigo": "1001", "nome": "VALE S.A." },
+  { "id": "cli-suzano", "codigo": "1002", "nome": "SUZANO S.A." },
+  { "id": "cli-klabin", "codigo": "1003", "nome": "KLABIN S.A." },
+  { "id": "cli-gerdau", "codigo": "1004", "nome": "GERDAU AÇOS LONGOS S.A." }
+]

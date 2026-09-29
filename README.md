@@ -69,7 +69,7 @@ After schema changes, re-run:
 ```bash
 npm run directus:bootstrap
 # or against production:
-DIRECTUS_URL=https://api-raca-comercial.soultech.solutions npm run directus:bootstrap
+DIRECTUS_URL=https://api.your-domain.com npm run directus:bootstrap
 ```
 
 ## Analista Comercial (Claude)
@@ -95,7 +95,7 @@ With `VITE_USE_MOCK=false` and a write token, **Base de Dados → Upload** parse
 
 ```env
 VITE_USE_MOCK=false
-VITE_DIRECTUS_URL=https://api-raca-comercial.soultech.solutions
+VITE_DIRECTUS_URL=https://api.your-domain.com
 VITE_DIRECTUS_TOKEN=your_static_token
 ```
 
@@ -121,20 +121,20 @@ location /ipanema_crm2/ {
 
 ## Production deploy (API)
 
-Target: `https://api-raca-comercial.soultech.solutions`
+Target: `https://api.your-domain.com`
 
 Run **from your laptop** (SSH + rsync to the VPS):
 
 ```bash
 cp .env.production.example .env.production
-# fill DEPLOY_SSH, DEPLOY_PATH, DB_*, DIRECTUS_SECRET, ADMIN_*
+# fill DEPLOY_SSH, DEPLOY_PATH, PUBLIC_URL, DB_*, DIRECTUS_SECRET, ADMIN_*
 
 ./scripts/deploy.sh --env-file .env.production
 # first time / schema:
 ./scripts/deploy.sh --env-file .env.production --bootstrap
 ```
 
-This syncs the repo to the VPS and starts **Directus + Redis** there. It does **not** start Postgres — set `DB_*` to your existing database.
+This builds the Directus extensions, syncs the repo to the VPS and starts **Directus + Redis** there. Postgres: set `DB_*` to an existing database, or `DEPLOY_LOCAL_DB=true` to run it inside Compose on the VPS.
 
 Point reverse proxy (TLS) at `127.0.0.1:8083` on the VPS (or your `DIRECTUS_PORT`).
 

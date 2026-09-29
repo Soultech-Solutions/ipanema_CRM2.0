@@ -4,16 +4,18 @@ services:
     profiles:
       - frontend
 
-  # Do not start the Compose Postgres — use the VPS existing database.
+  # Compose Postgres only with DEPLOY_LOCAL_DB=true (profile prod-db);
+  # otherwise Directus uses the existing database at DB_HOST.
   database:
     profiles:
-      - never
+      - prod-db
 
   directus:
-    ports:
-      - '${DIRECTUS_PORT:-8083}:8055'
+    # Only the reverse proxy on the VPS reaches Directus (Docker bypasses ufw).
+    ports: !override
+      - '127.0.0.1:${DIRECTUS_PORT:-8083}:8055'
     environment:
-      PUBLIC_URL: ${PUBLIC_URL:-https://api-raca-comercial.soultech.solutions}
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL in .env}
       CORS_ORIGIN: ${CORS_ORIGIN:-true}
       DB_HOST: ${DB_HOST:?Set DB_HOST to your existing Postgres host}
       DB_PORT: ${DB_PORT:-5432}
@@ -26,3 +28,24 @@ services:
       ANTHROPIC_MAX_TOKENS: ${ANTHROPIC_MAX_TOKENS:-2048}
       ANALISTA_MAX_TOOL_ROUNDS: ${ANALISTA_MAX_TOOL_ROUNDS:-6}
       ANALISTA_ENABLED: ${ANALISTA_ENABLED:-true}
+      EMAIL_INGEST_ENABLED: ${EMAIL_INGEST_ENABLED:-false}
+      MAIL_PROVIDER: ${MAIL_PROVIDER:-imap}
+      MAIL_POLL_CRON: '${MAIL_POLL_CRON:-*/2 * * * *}'
+      MAIL_BATCH_SIZE: ${MAIL_BATCH_SIZE:-20}
+      MAIL_PROCESSED_FOLDER: ${MAIL_PROCESSED_FOLDER:-}
+      EMAIL_MAX_ATTACHMENTS: ${EMAIL_MAX_ATTACHMENTS:-5}
+      EMAIL_MAX_ATTACHMENT_MB: ${EMAIL_MAX_ATTACHMENT_MB:-10}
+      EMAIL_EXTRACTOR_MODEL: ${EMAIL_EXTRACTOR_MODEL:-}
+      EMAIL_EXTRACTOR_MAX_TOKENS: ${EMAIL_EXTRACTOR_MAX_TOKENS:-4096}
+      EMAIL_EXTRACTOR_MAX_TOOL_ROUNDS: ${EMAIL_EXTRACTOR_MAX_TOOL_ROUNDS:-10}
+      IMAP_HOST: ${IMAP_HOST:-}
+      IMAP_PORT: ${IMAP_PORT:-993}
+      IMAP_SECURE: ${IMAP_SECURE:-true}
+      IMAP_USER: ${IMAP_USER:-}
+      IMAP_PASSWORD: ${IMAP_PASSWORD:-}
+      IMAP_FOLDER: ${IMAP_FOLDER:-INBOX}
+      O365_TENANT_ID: ${O365_TENANT_ID:-}
+      O365_CLIENT_ID: ${O365_CLIENT_ID:-}
+      O365_CLIENT_SECRET: ${O365_CLIENT_SECRET:-}
+      O365_MAILBOX: ${O365_MAILBOX:-}
+      O365_FOLDER: ${O365_FOLDER:-inbox}

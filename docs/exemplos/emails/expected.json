@@ -1,0 +1,31 @@
+{
+  "01-vale-rfq-rolamentos.eml": {
+    "is_quote_request": true,
+    "itens": [
+      { "codigo": "22320-E1-K", "quantidade": 10 },
+      { "codigo": "NK45/20", "quantidade": 8 },
+      { "codigo": "NU 222 ECP", "quantidade": 4 }
+    ]
+  },
+  "02-suzano-descricao-livre.eml": {
+    "is_quote_request": true,
+    "itens": [
+      { "codigo": "22320-E1-K", "quantidade": 2 },
+      { "codigo": "NK45/20", "quantidade": 6 },
+      { "codigo": "SNL 522", "quantidade": 1 }
+    ]
+  },
+  "03-gerdau-nao-comercial.eml": {
+    "is_quote_request": false,
+    "itens": []
+  },
+  "04-klabin-anexo-csv.eml": {
+    "is_quote_request": true,
+    "itens": [
+      { "codigo": "22320-E1-K", "quantidade": 6 },
+      { "codigo": "NU 222 ECP", "quantidade": 4 },
+      { "codigo": "6205-2RS", "quantidade": 20 },
+      { "codigo": null, "quantidade": 10 }
+    ]
+  }
+}

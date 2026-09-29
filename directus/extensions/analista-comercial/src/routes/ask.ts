@@ -6,7 +6,7 @@ import { mapError } from '../http/map-error'
 export function askHandler (context: any) {
   return async (req: Request, res: Response) => {
     try {
-      const userId = req.accountability?.user
+      const userId = (req as Request & { accountability?: { user?: string | null } }).accountability?.user
       if (!userId) {
         return res.status(401).json({
           errors: [{
