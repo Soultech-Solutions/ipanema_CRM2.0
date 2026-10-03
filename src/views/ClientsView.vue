@@ -68,15 +68,15 @@
   }
 
   // ── Dados de exemplo (Figma): a base não tem margem por cliente ──
-  const bolhas = [
-    { x: 111, y: 120, r: 12, c: '#17324d' },
-    { x: 193, y: 89, r: 18, c: '#1d7a4d' },
-    { x: 240, y: 162, r: 13, c: '#d9232e' },
-    { x: 344, y: 69, r: 22, c: '#2f6b9a' },
-    { x: 399, y: 135, r: 16, c: '#b39b5e' },
-    { x: 455, y: 94, r: 10, c: '#17324d' },
-    { x: 289, y: 197, r: 9, c: '#1d7a4d' },
-    { x: 516, y: 173, r: 15, c: '#d9232e' },
+    const bolhas = [
+    { x: 17, y: 47, d: 32, c: '#17324d' },
+    { x: 32, y: 30, d: 48, c: '#1d7a4d' },
+    { x: 40, y: 69, d: 34, c: '#d9232e' },
+    { x: 59, y: 19, d: 58, c: '#2f6b9a' },
+    { x: 69, y: 54, d: 42, c: '#b39b5e' },
+    { x: 79, y: 33, d: 28, c: '#17324d' },
+    { x: 49, y: 88, d: 24, c: '#1d7a4d' },
+    { x: 90, y: 75, d: 40, c: '#d9232e' },
   ]
 
   const statusOptions = [
@@ -121,7 +121,7 @@
     <!-- KPIs -->
     <v-row>
       <v-col cols="12" lg="3" sm="6">
-        <KpiCard class="h-100" label="Clientes ativos" :value="totalAtivos.toLocaleString('pt-BR')" />
+        <KpiCard class="h-100" label="Clientes na carteira" :value="store.list.length.toLocaleString('pt-BR')" />
       </v-col>
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
@@ -153,22 +153,20 @@
     <!-- Mapa da carteira + Carteira por status -->
     <v-row>
       <v-col cols="12" lg="8">
-        <SectionCard class="h-100" subtitle="Faturamento x margem • tamanho = potencial" title="Mapa da carteira">
+                <SectionCard class="h-100" subtitle="Faturamento x margem • tamanho = potencial" title="Mapa da carteira">
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
-          <svg class="map" preserveAspectRatio="xMidYMid meet" viewBox="0 0 600 250">
-            <text class="map__axis" x="6" y="14">↑ Faturamento</text>
-            <text class="map__axis" text-anchor="end" x="594" y="244">Margem →</text>
-            <circle
+          <div class="map">
+            <span class="map__axis map__axis--y">↑ Faturamento</span>
+            <span class="map__axis map__axis--x">Margem →</span>
+            <span
               v-for="(b, i) in bolhas"
               :key="i"
-              :cx="b.x"
-              :cy="b.y"
-              :fill="b.c"
-              :r="b.r"
+              class="map__dot"
+              :style="{ left: `${b.x}%`, top: `${b.y}%`, width: `${b.d}px`, height: `${b.d}px`, background: b.c }"
             />
-          </svg>
+          </div>
         </SectionCard>
       </v-col>
 
@@ -298,8 +296,11 @@
 </template>
 
 <style scoped>
-.map { width: 100%; height: 250px; display: block; }
-.map__axis { font-size: 11px; fill: var(--ip-text-muted); }
+.map { position: relative; height: 250px; }
+.map__axis { position: absolute; font-size: 11px; color: var(--ip-text-muted); }
+.map__axis--y { top: 0; left: 0; }
+.map__axis--x { bottom: 0; right: 0; }
+.map__dot { position: absolute; border-radius: 50%; transform: translate(-50%, -50%); }
 
 .status-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .status-row__chip { min-width: 110px; justify-content: flex-start; height: 32px; }
