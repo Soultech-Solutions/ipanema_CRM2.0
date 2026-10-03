@@ -30,7 +30,7 @@ const router = createRouter({
           path: '',
           name: 'dashboard',
           component: () => import('@/views/DashboardView.vue'),
-          meta: { title: 'Executivo', subtitle: 'Visão consolidada da operação comercial e das prioridades de decisão.' },
+          meta: { title: 'Executivo', subtitle: 'Visão consolidada da operação comercial e das prioridades de decisão.', figmaHeader: true },
         },
         {
           path: 'funil',

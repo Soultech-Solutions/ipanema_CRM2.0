@@ -1,6 +1,10 @@
 <script lang="ts" setup>
+  import type { ChipTone } from '@/components/StatusChip.vue'
   import { computed, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
+  import KpiCard from '@/components/KpiCard.vue'
+  import SectionCard from '@/components/SectionCard.vue'
+  import StatusChip from '@/components/StatusChip.vue'
   import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
   import { formatCurrency } from '@/utils/format'
@@ -24,15 +28,15 @@
   const clientesAtencaoCount = computed(() =>
     commercial.clients.filter(c => c.status === 'risco').length)
 
-  type Tone = 'error' | 'warning' | 'success' | 'info'
+  const topRecomendacao = computed(() => store.recomendacoes[0])
 
-  function prioridadeTone (prioridade: string): Tone {
+  function prioridadeTone (prioridade: string): ChipTone {
     if (prioridade === 'alta') return 'error'
-    if (prioridade === 'media') return 'warning'
+    if (prioridade === 'media') return 'gold'
     return 'info'
   }
 
-  function insightTone (tipo: string): Tone {
+  function insightTone (tipo: string): ChipTone {
     if (tipo === 'risco' || tipo === 'alerta') return 'error'
     if (tipo === 'oportunidade') return 'success'
     return 'info'
@@ -48,50 +52,40 @@
   /** Motivo de atenção do cliente, derivado de dados reais (sem inventar número) */
   function clientReason (client: { status: string, diasSemCompra: number, probabilidadePerda: number, healthScore: number, receitaPotencial: number }) {
     if (client.status === 'inativo') {
-      return { label: `Sem compra há ${client.diasSemCompra}d`, tone: 'error' as Tone }
+      return { label: `Sem compra há ${client.diasSemCompra}d`, tone: 'error' as ChipTone }
     }
     if (client.probabilidadePerda >= 0.5) {
-      return { label: `Risco de perda ${(client.probabilidadePerda * 100).toFixed(0)}%`, tone: 'error' as Tone }
+      return { label: `Risco de perda ${(client.probabilidadePerda * 100).toFixed(0)}%`, tone: 'error' as ChipTone }
     }
     if (client.healthScore < 70) {
-      return { label: `Health baixo (${client.healthScore})`, tone: 'warning' as Tone }
+      return { label: `Health baixo (${client.healthScore})`, tone: 'gold' as ChipTone }
     }
-    return { label: `Potencial ${formatCurrency(client.receitaPotencial, true)}`, tone: 'info' as Tone }
+    return { label: `Potencial ${formatCurrency(client.receitaPotencial, true)}`, tone: 'info' as ChipTone }
   }
+
+  // ── DADOS DE EXEMPLO (do Figma) — a base ainda não tem faturamento mensal, meta nem segmento ──
+  const sampleSeries = [90, 105, 95, 120, 125, 135, 130, 150]
+  const bars = computed(() => {
+    const now = new Date()
+    return sampleSeries.map((value, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (sampleSeries.length - 1 - i), 1)
+      const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+      return { value, label }
+    })
+  })
+
+  const sampleSegments = [
+    { nome: 'Mineração', pct: 28 },
+    { nome: 'Papel & Celulose', pct: 21 },
+    { nome: 'Siderurgia', pct: 16 },
+    { nome: 'Agro', pct: 14 },
+    { nome: 'Outros', pct: 21 },
+  ]
 </script>
 
 <template>
   <div>
-    <!-- Header -->
-    <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-5">
-      <div>
-        <h1 class="text-h4 font-weight-bold mb-1 brand-title">
-          Visão comercial
-        </h1>
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          Prioridades, riscos e desempenho da carteira em uma única tela.
-          <span v-if="commercial.progress" class="text-primary"> · {{ commercial.progress }}</span>
-        </p>
-      </div>
-
-      <div class="d-flex ga-2">
-        <v-btn
-          color="secondary"
-          rounded="lg"
-          variant="outlined"
-        >
-          Exportar
-        </v-btn>
-        <v-btn
-          color="primary"
-          rounded="lg"
-          variant="flat"
-          @click="router.push('/pipeline')"
-        >
-          + Nova oportunidade
-        </v-btn>
-      </div>
-    </div>
+    <p v-if="commercial.progress" class="ip-card-subtitle mb-4">{{ commercial.progress }}</p>
 
     <v-alert
       v-if="store.error"
@@ -102,157 +96,153 @@
       {{ store.error }}
     </v-alert>
 
-    <v-row v-if="store.loading && !store.kpis" class="mb-4">
-      <v-col v-for="n in 5" :key="n" cols="12" md="2" sm="4">
+    <v-row v-if="store.loading && !store.kpis">
+      <v-col v-for="n in 4" :key="n" cols="12" lg="3" sm="6">
         <v-skeleton-loader type="card" />
       </v-col>
     </v-row>
 
     <template v-if="store.kpis">
-      <!-- 5 métricas -->
-      <div class="d-flex flex-wrap ga-3 mb-5">
-        <v-card class="metric-card" rounded="xl" variant="outlined">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-h5 font-weight-bold">{{ formatCurrency(store.kpis.receitaPotencial, true) }}</span>
+      <!-- KPIs -->
+      <v-row>
+        <v-col cols="12" lg="3" sm="6">
+          <KpiCard
+            class="h-100"
+            label="Pipeline aberto"
+            :value="formatCurrency(store.kpis.receitaPotencial, true)"
+          />
+        </v-col>
+        <v-col cols="12" lg="3" sm="6">
+          <KpiCard
+            accent="var(--ip-red)"
+            class="h-100"
+            label="Clientes pedem atenção"
+            :value="String(clientesAtencaoCount)"
+          />
+        </v-col>
+        <v-col cols="12" lg="3" sm="6">
+          <KpiCard
+            accent="var(--ip-blue)"
+            class="h-100"
+            label="Conversão estimada"
+            :value="`${conversaoMedia}%`"
+          />
+        </v-col>
+        <v-col cols="12" lg="3" sm="6">
+          <KpiCard
+            accent="var(--ip-gold)"
+            class="h-100"
+            delta="Dado de exemplo"
+            delta-tone="gold"
+            label="Margem média"
+            value="24,8%"
+          />
+        </v-col>
+      </v-row>
+
+      <!-- Faturamento x Meta + Segmentos (exemplo) -->
+      <v-row>
+        <v-col cols="12" lg="8">
+          <SectionCard class="h-100" subtitle="Evolução dos últimos 8 meses" title="Faturamento x Meta">
+            <template #actions>
+              <StatusChip label="Dado de exemplo" tone="gold" />
+            </template>
+            <div class="bars">
+              <div v-for="(b, i) in bars" :key="i" class="bars__col">
+                <div
+                  class="bars__bar"
+                  :class="{ 'bars__bar--last': i === bars.length - 1 }"
+                  :style="{ height: `${b.value}px` }"
+                />
+                <span class="bars__label">{{ b.label }}</span>
+              </div>
             </div>
-            <div class="text-body-2 text-medium-emphasis">Orçamentos em aberto</div>
-          </v-card-text>
-        </v-card>
+          </SectionCard>
+        </v-col>
 
-        <v-card class="metric-card" rounded="xl" variant="outlined">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-h5 font-weight-bold">12</span>
+        <v-col cols="12" lg="4">
+          <SectionCard class="h-100" subtitle="Participação no faturamento" title="Segmentos">
+            <template #actions>
+              <StatusChip label="Dado de exemplo" tone="gold" />
+            </template>
+            <div v-for="seg in sampleSegments" :key="seg.nome" class="seg">
+              <div class="seg__head">
+                <span>{{ seg.nome }}</span>
+                <span class="seg__pct">{{ seg.pct }}%</span>
+              </div>
+              <div class="seg__track"><div class="seg__fill" :style="{ width: `${seg.pct * 3}%` }" /></div>
             </div>
-            <div class="text-body-2 text-medium-emphasis">Follow-ups vencidos</div>
-            <div class="text-caption font-italic text-disabled">dado de exemplo — recurso ainda não construído</div>
-          </v-card-text>
-        </v-card>
+          </SectionCard>
+        </v-col>
+      </v-row>
 
-        <v-card class="metric-card" rounded="xl" variant="outlined">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-h5 font-weight-bold">{{ clientesAtencaoCount }}</span>
-            </div>
-            <div class="text-body-2 text-medium-emphasis">Clientes pedem atenção</div>
-          </v-card-text>
-        </v-card>
-
-        <v-card class="metric-card" rounded="xl" variant="outlined">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-h5 font-weight-bold">24,8%</span>
-            </div>
-            <div class="text-body-2 text-medium-emphasis">Margem média</div>
-            <div class="text-caption font-italic text-disabled">dado de exemplo — sem dado de custo/margem na base</div>
-          </v-card-text>
-        </v-card>
-
-        <v-card class="metric-card" rounded="xl" variant="outlined">
-          <v-card-text class="pa-4">
-            <div class="d-flex align-center justify-space-between mb-2">
-              <span class="text-h5 font-weight-bold">{{ conversaoMedia }}%</span>
-            </div>
-            <div class="text-body-2 text-medium-emphasis">Conversão estimada</div>
-          </v-card-text>
-        </v-card>
-      </div>
-
-      <!-- Leitura comercial da IA -->
-      <v-card class="ia-panel mb-5 pa-4" rounded="xl">
-        <div class="text-subtitle-1 font-weight-bold text-white mb-3">
-          Leitura comercial da IA
-        </div>
-
-        <div class="d-flex flex-wrap ga-3">
-          <v-card
-            v-for="ins in store.insights.slice(0, 3)"
-            :key="ins.id"
-            class="ia-insight pa-3"
-            rounded="lg"
-          >
-            <v-chip
-              class="mb-2"
-              :color="insightTone(ins.tipo)"
-              rounded="pill"
-              size="small"
-              variant="tonal"
-            >
-              {{ insightLabel(ins.tipo) }}
-            </v-chip>
-            <div class="text-body-2 font-weight-medium ia-insight-text mb-1">{{ ins.titulo }}</div>
-            <div class="text-caption ia-insight-text">{{ ins.descricao }}</div>
-          </v-card>
-
-          <div v-if="!store.insights.length" class="text-caption text-medium-emphasis">
-            Nenhum insight disponível ainda.
-          </div>
-        </div>
-      </v-card>
-
-      <!-- Duas colunas -->
+      <!-- Riscos e oportunidades + Insight da IA (dados reais) -->
       <v-row>
         <v-col cols="12" lg="6">
-          <v-card class="h-100" rounded="xl" variant="outlined">
-            <v-card-text class="pa-4">
-              <div class="text-subtitle-1 font-weight-bold mb-1">O que precisa de ação hoje</div>
-              <div class="text-caption text-medium-emphasis mb-3">Ordenado por prioridade</div>
-
-              <template v-for="(rec, i) in store.recomendacoes.slice(0, 5)" :key="rec.id">
-                <div class="d-flex align-center ga-3 py-2">
-                  <v-chip
-                    :color="prioridadeTone(rec.prioridade)"
-                    rounded="pill"
-                    size="small"
-                    variant="tonal"
-                  >
-                    {{ rec.acao }}
-                  </v-chip>
-                  <span class="text-caption">
-                    {{ rec.titulo }} — {{ rec.clienteNome || 'Carteira geral' }}
-                    <template v-if="rec.impactoEstimado"> • {{ formatCurrency(rec.impactoEstimado, true) }}</template>
-                  </span>
-                </div>
-                <v-divider v-if="i < store.recomendacoes.slice(0, 5).length - 1" />
-              </template>
-
-              <div v-if="!store.recomendacoes.length" class="text-caption text-medium-emphasis">
-                Nenhuma recomendação pendente.
+          <SectionCard class="h-100" subtitle="O que exige ação da diretoria" title="Riscos e oportunidades">
+            <div v-for="ins in store.insights.slice(0, 3)" :key="ins.id" class="row-item">
+              <StatusChip :label="insightLabel(ins.tipo)" :tone="insightTone(ins.tipo)" />
+              <div>
+                <div class="row-item__title">{{ ins.titulo }}</div>
+                <div class="row-item__sub">{{ ins.descricao }}</div>
               </div>
-            </v-card-text>
-          </v-card>
+            </div>
+            <div v-if="!store.insights.length" class="ip-card-subtitle">Nenhum insight disponível ainda.</div>
+          </SectionCard>
         </v-col>
 
         <v-col cols="12" lg="6">
-          <v-card class="h-100" rounded="xl" variant="outlined">
-            <v-card-text class="pa-4">
-              <div class="text-subtitle-1 font-weight-bold mb-1">Clientes que merecem atenção</div>
-              <div class="text-caption text-medium-emphasis mb-3">Volume, margem e relacionamento</div>
+          <SectionCard class="h-100" large title="Insight da IA">
+            <template v-if="topRecomendacao">
+              <div class="ia-headline">{{ topRecomendacao.titulo }}</div>
+              <p class="ip-card-subtitle mt-3 mb-0">
+                {{ topRecomendacao.clienteNome || 'Carteira geral' }}
+                <template v-if="topRecomendacao.impactoEstimado">
+                  • impacto {{ formatCurrency(topRecomendacao.impactoEstimado, true) }}
+                </template>
+              </p>
+              <v-btn
+                class="mt-6"
+                color="primary"
+                variant="flat"
+                @click="router.push('/analista')"
+              >
+                Ver análise completa
+              </v-btn>
+            </template>
+            <div v-else class="ip-card-subtitle">Nenhum insight disponível ainda.</div>
+          </SectionCard>
+        </v-col>
+      </v-row>
 
-              <template v-for="(client, i) in store.clientesRisco" :key="client.id">
-                <div
-                  class="d-flex align-center justify-space-between py-2 cursor-pointer"
-                  @click="router.push(`/clientes/${client.id}`)"
-                >
-                  <span class="text-body-2 font-weight-medium">{{ client.nome }}</span>
-                  <v-chip
-                    :color="clientReason(client).tone"
-                    rounded="pill"
-                    size="small"
-                    variant="tonal"
-                  >
-                    {{ clientReason(client).label }}
-                  </v-chip>
-                </div>
-                <v-divider v-if="i < store.clientesRisco.length - 1" />
-              </template>
+      <!-- Listas operacionais (dados reais) -->
+      <v-row>
+        <v-col cols="12" lg="6">
+          <SectionCard class="h-100" subtitle="Ordenado por prioridade" title="O que precisa de ação hoje">
+            <div v-for="rec in store.recomendacoes.slice(0, 5)" :key="rec.id" class="row-item">
+              <StatusChip :label="rec.acao" :tone="prioridadeTone(rec.prioridade)" />
+              <span class="row-item__sub">
+                {{ rec.titulo }} — {{ rec.clienteNome || 'Carteira geral' }}
+                <template v-if="rec.impactoEstimado"> • {{ formatCurrency(rec.impactoEstimado, true) }}</template>
+              </span>
+            </div>
+            <div v-if="!store.recomendacoes.length" class="ip-card-subtitle">Nenhuma recomendação pendente.</div>
+          </SectionCard>
+        </v-col>
 
-              <div v-if="!store.clientesRisco.length" class="text-caption text-medium-emphasis">
-                Nenhum cliente em atenção no momento.
-              </div>
-            </v-card-text>
-          </v-card>
+        <v-col cols="12" lg="6">
+          <SectionCard class="h-100" subtitle="Volume, margem e relacionamento" title="Clientes que merecem atenção">
+            <div
+              v-for="client in store.clientesRisco"
+              :key="client.id"
+              class="row-item row-item--click"
+              @click="router.push(`/clientes/${client.id}`)"
+            >
+              <span class="row-item__title flex-grow-1">{{ client.nome }}</span>
+              <StatusChip :label="clientReason(client).label" :tone="clientReason(client).tone" />
+            </div>
+            <div v-if="!store.clientesRisco.length" class="ip-card-subtitle">Nenhum cliente em atenção no momento.</div>
+          </SectionCard>
         </v-col>
       </v-row>
     </template>
@@ -260,30 +250,26 @@
 </template>
 
 <style scoped>
-.metric-card {
-  flex: 1 1 200px;
-  min-width: 200px;
-}
+.bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; height: 190px; padding-top: 16px; border-bottom: 1px solid var(--ip-border); }
+.bars__col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+.bars__bar { width: 100%; max-width: 65px; border-radius: 10px 10px 0 0; background: var(--ip-tint-blue); }
+.bars__bar--last { background: var(--ip-navy); }
+.bars__label { position: absolute; }
+.bars { position: relative; padding-bottom: 0; margin-bottom: 28px; }
+.bars__col { position: relative; }
+.bars__label { bottom: -22px; font-size: 11px; color: var(--ip-text-muted); text-transform: capitalize; }
 
-.ia-panel {
-  background: #161a1f !important;
-}
+.seg { margin-bottom: 14px; }
+.seg__head { display: flex; justify-content: space-between; font-size: 13px; color: var(--ip-text); margin-bottom: 6px; }
+.seg__pct { font-weight: 600; }
+.seg__track { height: 6px; border-radius: 3px; background: var(--ip-tint-blue); }
+.seg__fill { height: 100%; border-radius: 3px; background: var(--ip-navy); }
 
-.ia-insight {
-  background: #20252b !important;
-  border: 1px solid #2b3138;
-  flex: 1 1 280px;
-  min-width: 280px;
-}
+.row-item { display: flex; align-items: center; gap: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--ip-border); border-radius: 12px; }
+.row-item__title { font-size: 14px; font-weight: 600; color: var(--ip-text); }
+.row-item__sub { font-size: 13px; color: var(--ip-text-muted); }
+.row-item--click { cursor: pointer; }
+.row-item--click:hover { background: var(--ip-bg); }
 
-.ia-insight-text {
-  color: #d7dce3;
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-.cursor-pointer:hover {
-  background: rgba(var(--v-theme-primary), 0.04);
-}
+.ia-headline { font-size: 23px; font-weight: 700; line-height: 1.25; color: var(--ip-navy); }
 </style>
