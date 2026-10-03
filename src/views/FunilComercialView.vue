@@ -102,7 +102,7 @@
     </v-row>
 
     <!-- Oportunidades de recuperação -->
-    <SectionCard subtitle="Cotações relevantes sem avanço ou follow-up" title="Oportunidades de recuperação">
+    <SectionCard class="mt-3" subtitle="Cotações relevantes sem avanço ou follow-up" title="Oportunidades de recuperação">
       <template #actions>
         <StatusChip label="Dado de exemplo" tone="gold" />
       </template>

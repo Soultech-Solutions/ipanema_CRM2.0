@@ -98,7 +98,7 @@
     </v-row>
 
     <!-- Tabela -->
-    <SectionCard subtitle="Health Score, receita em risco, potencial e insights por conta" title="Carteira de clientes">
+    <    <SectionCard class="mt-3" subtitle="Health Score, receita em risco, potencial e insights por conta" title="Carteira de clientes">class="mt-3" subtitle="Cotações relevantes sem avanço ou follow-up" title="Oportunidades de recuperação">
       <v-row class="mb-2" density="compact">
         <v-col cols="12" md="6">
           <v-text-field
