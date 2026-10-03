@@ -1,6 +1,7 @@
 /**
- * Tema Ipanema CRM 2.0 — extraído do Figma aprovado pelo cliente.
- * Primário: vermelho institucional Ipanema · fonte: Inter.
+ * Tema Gestão Ipanema — Inteligência Comercial.
+ * Tokens extraídos do frame "00.1 • Design System" do Figma.
+ * Primário: navy institucional · vermelho/verde/dourado/azul como cores semânticas · fonte: Inter.
  */
 
 import { createVuetify } from 'vuetify'
@@ -14,50 +15,51 @@ import 'vuetify/styles'
 const ipanemaLight = {
   dark: false,
   colors: {
-    'background': '#F7F8FA',
+    'background': '#F5F7FA',
     'surface': '#FFFFFF',
     'surface-bright': '#FFFFFF',
-    'surface-light': '#F7F8FA',
-    'surface-variant': '#E6E8EC',
-    'on-surface-variant': '#667085',
-    'primary': '#C61F3E',
-    'primary-darken-1': '#A5192F',
-    'secondary': '#1E2329',
-    'secondary-darken-1': '#111111',
-    'accent': '#2563EB',
-    'error': '#C61F3E',
-    'info': '#2563EB',
-    'success': '#2E8B57',
-    'warning': '#D97706',
-    'on-background': '#1E2329',
-    'on-surface': '#1E2329',
+    'surface-light': '#F5F7FA',
+    'surface-variant': '#E4E9EF',
+    'on-surface-variant': '#667484',
+    'primary': '#17324D',
+    'primary-darken-1': '#102338',
+    'secondary': '#2F6B9A',
+    'secondary-darken-1': '#245377',
+    'accent': '#B39B5E',
+    'error': '#D9232E',
+    'info': '#2F6B9A',
+    'success': '#1D7A4D',
+    'warning': '#B39B5E',
+    'on-background': '#16212B',
+    'on-surface': '#16212B',
     'on-primary': '#FFFFFF',
     'on-secondary': '#FFFFFF',
   },
 }
 
+/** O Figma não define tema escuro — este é derivado do claro (a validar com o design). */
 const ipanemaDark = {
   dark: true,
   colors: {
-    'background': '#161A1F',
-    'surface': '#20252B',
-    'surface-bright': '#2B3138',
-    'surface-light': '#1A1E24',
-    'surface-variant': '#2B3138',
-    'on-surface-variant': '#D7DCE3',
-    'primary': '#E14A64',
-    'primary-darken-1': '#C61F3E',
-    'secondary': '#FFFFFF',
-    'secondary-darken-1': '#E0E0E0',
-    'accent': '#5B8DEF',
-    'error': '#E14A64',
-    'info': '#5B8DEF',
+    'background': '#0F1923',
+    'surface': '#16212B',
+    'surface-bright': '#1E2C3A',
+    'surface-light': '#121C26',
+    'surface-variant': '#243545',
+    'on-surface-variant': '#B6C2CE',
+    'primary': '#5B8DBF',
+    'primary-darken-1': '#2F6B9A',
+    'secondary': '#7FB0D8',
+    'secondary-darken-1': '#2F6B9A',
+    'accent': '#CDB87E',
+    'error': '#EF5560',
+    'info': '#7FB0D8',
     'success': '#4CAF7D',
-    'warning': '#E8A33D',
-    'on-background': '#F5F5F5',
-    'on-surface': '#F5F5F5',
+    'warning': '#CDB87E',
+    'on-background': '#F5F7FA',
+    'on-surface': '#F5F7FA',
     'on-primary': '#FFFFFF',
-    'on-secondary': '#111111',
+    'on-secondary': '#0F1923',
   },
 }
 
@@ -70,15 +72,8 @@ export default createVuetify({
     },
   },
   defaults: {
-    VCard: {
-      rounded: 'xl',
-    },
-    VBtn: {
-      rounded: 'lg',
-      fontWeight: '600',
-    },
-    VChip: {
-      rounded: 'pill',
-    },
+    VCard: { rounded: 'xl' },
+    VBtn: { rounded: 'lg', fontWeight: '600' },
+    VChip: { rounded: 'pill' },
   },
 })
