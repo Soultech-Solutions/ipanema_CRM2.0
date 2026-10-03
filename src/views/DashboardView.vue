@@ -255,12 +255,10 @@
 
 <style scoped>
 /* Gráfico de barras (exemplo) */
-.bars { display: flex; align-items: flex-end; gap: 14px; height: 180px; border-bottom: 1px solid var(--ip-border); }
-.bars__bar { flex: 1; max-width: 70px; border-radius: 8px 8px 0 0; }
-.bars-labels { display: flex; gap: 14px; margin-top: 8px; }
-.bars-labels span { flex: 1; max-width: 70px; text-align: center; font-size: 11px; color: var(--ip-text-muted); text-transform: capitalize; }
-.bars, .bars-labels { justify-content: space-between; }
-.bars-labels span, .bars__bar { max-width: none; }
+.bars { display: flex; align-items: flex-end; justify-content: space-around; height: 180px; border-bottom: 1px solid var(--ip-border); }
+.bars__bar { width: 48px; border-radius: 8px 8px 0 0; }
+.bars-labels { display: flex; justify-content: space-around; margin-top: 8px; }
+.bars-labels span { width: 48px; text-align: center; font-size: 11px; color: var(--ip-text-muted); text-transform: capitalize; }
 
 /* Segmentos (exemplo) */
 .seg { margin-bottom: 14px; }
