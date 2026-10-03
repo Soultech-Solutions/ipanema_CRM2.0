@@ -131,6 +131,10 @@
         item-value="id"
         :items="filtered"
         :loading="store.loading"
+        items-per-page-text="Itens por página"
+        loading-text="Carregando clientes…"
+        no-data-text="Nenhum cliente encontrado"
+        page-text="{0}-{1} de {2}"
         @click:row="(_e: Event, { item }: { item: { id: string } }) => router.push(`/clientes/${item.id}`)"
       >
         <template #item.nome="{ item }">
