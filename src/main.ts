@@ -14,8 +14,11 @@ import { registerPlugins } from '@/plugins'
 import App from './App.vue'
 
 // Styles
+// Styles
 import 'unfonts.css'
 import '@/styles/brand.scss'
+import '@/styles/ipanema-tokens.scss'
+
 
 const app = createApp(App)
 
