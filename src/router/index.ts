@@ -42,7 +42,7 @@ const router = createRouter({
           path: 'clientes',
           name: 'clients',
           component: () => import('@/views/ClientsView.vue'),
-          meta: { title: 'Clientes', subtitle: 'Visão 360º da carteira, risco, crescimento e potencial.' },
+          meta: { title: 'Clientes', subtitle: 'Visão 360º da carteira, risco, crescimento e potencial.', figmaHeader: true },
         },
         {
           path: 'clientes/:id',
