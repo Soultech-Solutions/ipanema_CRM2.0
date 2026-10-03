@@ -3,7 +3,6 @@
   import { computed, onMounted, ref } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { useDisplay, useTheme } from 'vuetify'
-  import logoIpanema from '@/assets/logo-ipanema.png'
   import { decisionFlow, mainNav, mobileNav, operationsNav } from '@/config/navigation'
   import { useAuthStore } from '@/stores/auth'
   import { useCommercialStore } from '@/stores/commercial'
@@ -17,7 +16,6 @@
   const commercial = useCommercialStore()
   const auth = useAuthStore()
 
-  const drawer = ref(true)
   const showOperations = ref(route.meta.group === 'operations')
 
   onMounted(() => {
@@ -69,12 +67,11 @@
       width="240"
     >
       <div class="brand">
-        <img alt="Ipanema Rolamentos" class="brand__logo" :src="logoIpanema">
         <div>
           <div class="brand__name">IPANEMA</div>
           <div class="brand__sub">ROLAMENTOS</div>
         </div>
-        <span class="brand__since">Desde 1969</span>
+        <span class="brand__since">DESDE 1969</span>
       </div>
       <div class="brand-product">Gestão Ipanema</div>
 
@@ -82,6 +79,7 @@
         <v-list-item
           v-for="item in mainNav"
           :key="item.to"
+          :active="isActive(item)"
           class="nav-item"
           :class="{ 'nav-item--active': isActive(item) }"
           rounded="lg"
@@ -104,6 +102,7 @@
           <v-list-item
             v-for="item in operationsNav"
             :key="item.to"
+            :active="isActive(item)"
             class="nav-item nav-item--sub"
             :class="{ 'nav-item--active': isActive(item) }"
             rounded="lg"
@@ -117,7 +116,12 @@
 
       <div class="flow">
         <div class="flow__title">DECISÃO COMERCIAL</div>
-        <div v-for="step in decisionFlow" :key="step" class="flow__step">
+        <div
+          v-for="(step, i) in decisionFlow"
+          :key="step"
+          class="flow__step"
+          :class="{ 'flow__step--result': i === decisionFlow.length - 1 }"
+        >
           <span class="flow__dot" />{{ step }}
         </div>
       </div>
@@ -134,24 +138,25 @@
     <!-- Topbar -->
     <v-app-bar class="app-bar" flat :height="mdAndDown ? 72 : (showFigmaHeader ? 82 : 64)">
       <template v-if="mdAndDown">
-        <img alt="Ipanema Rolamentos" class="brand__logo ms-4" :src="logoIpanema">
-        <div class="ms-3">
-          <div class="brand__name">IPANEMA</div>
-          <div class="brand__sub">ROLAMENTOS</div>
+        <div class="brand brand--mobile">
+          <div>
+            <div class="brand__name">IPANEMA</div>
+            <div class="brand__sub">ROLAMENTOS</div>
+          </div>
         </div>
         <v-spacer />
-        <span class="period__chip me-2">{{ periodLabel }}</span>
+        <span class="period__chip me-4">{{ periodLabel }}</span>
       </template>
 
       <template v-else>
         <div class="ms-8">
           <div class="ip-h1 topbar-title">{{ pageTitle }}</div>
-          <div v-if="showFigmaHeader && pageSubtitle" class="ip-card-subtitle">{{ pageSubtitle }}</div>
+          <div v-if="showFigmaHeader && pageSubtitle" class="ip-card-subtitle mt-1">{{ pageSubtitle }}</div>
         </div>
         <v-spacer />
         <template v-if="showFigmaHeader">
-          <v-btn class="me-2" color="primary" size="small" variant="outlined">Últimos 30 dias</v-btn>
-          <v-btn class="me-4" color="primary" size="small" variant="outlined">Comparar período</v-btn>
+          <v-btn class="period-btn me-2" size="small" variant="flat">Últimos 30 dias</v-btn>
+          <v-btn class="period-btn me-4" size="small" variant="flat">Comparar período</v-btn>
         </template>
         <v-btn icon variant="text" @click="toggleTheme">
           <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
@@ -203,28 +208,36 @@
 .app-bar { background: #fff !important; border-bottom: 1px solid var(--ip-border) !important; }
 .topbar-title { font-size: 22px; line-height: 1.2; }
 
-.brand { display: flex; align-items: center; gap: 12px; padding: 18px 24px 4px; position: relative; }
-.brand__logo { width: 36px; height: 36px; object-fit: contain; }
-.brand__name { font-weight: 700; font-size: 15px; color: var(--ip-navy); line-height: 1.1; letter-spacing: 0.04em; }
-.brand__sub { font-weight: 600; font-size: 11px; color: var(--ip-red); line-height: 1.3; letter-spacing: 0.08em; }
-.brand__since { position: absolute; top: 8px; right: 24px; font-size: 9px; color: var(--ip-gold); font-weight: 600; }
-.brand-product { padding: 14px 24px 12px; font-size: 13px; font-weight: 600; color: var(--ip-text-muted); }
+.brand { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 24px 0; }
+.brand--mobile { padding: 0 0 0 20px; }
+.brand__name { font-weight: 800; font-size: 22px; color: var(--ip-red); line-height: 1; letter-spacing: 0.01em; }
+.brand__sub { font-weight: 700; font-size: 9px; color: var(--ip-red); line-height: 1.6; letter-spacing: 0.12em; }
+.brand__since { font-size: 7px; color: var(--ip-gold); font-weight: 600; letter-spacing: 0.08em; }
+.brand-product { padding: 12px 24px 14px; font-size: 12px; font-weight: 500; color: var(--ip-text-muted); }
 
-.nav-item { color: var(--ip-text-muted); font-weight: 500; min-height: 40px; }
-.nav-item--active { background: var(--ip-tint-blue) !important; color: var(--ip-navy) !important; font-weight: 600; }
-.nav-item--muted { font-size: 12px; opacity: 0.8; }
-.nav-item--sub { padding-left: 28px !important; font-size: 13px; }
-.nav-badge { background: var(--ip-red); color: #fff; font-size: 11px; font-weight: 700; min-width: 24px; height: 22px; padding: 0 7px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center; }
+.nav-item { color: var(--ip-text); font-weight: 500; min-height: 40px; margin-bottom: 4px; }
+.nav-item :deep(.v-list-item-title) { font-size: 13px; }
+.nav-item :deep(.v-list-item__overlay) { opacity: 0 !important; }
+.nav-item:hover { background: var(--ip-bg); }
+.nav-item--active { background: var(--ip-navy) !important; color: #fff !important; font-weight: 600; }
+.nav-item--active:hover { background: var(--ip-navy) !important; }
+.nav-item--muted { font-size: 12px; color: var(--ip-text-muted); }
+.nav-item--sub { padding-left: 28px !important; }
+.nav-badge { background: var(--ip-tint-red); color: var(--ip-red); font-size: 11px; font-weight: 700; min-width: 28px; height: 24px; padding: 0 9px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; }
 
 .flow { padding: 12px 24px; }
-.flow__title { font-size: 11px; font-weight: 700; color: var(--ip-text-muted); letter-spacing: 0.06em; margin-bottom: 10px; }
-.flow__step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ip-text); padding: 6px 0; }
-.flow__dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ip-gold); }
+.flow__title { font-size: 9px; font-weight: 600; color: var(--ip-text-muted); letter-spacing: 0.06em; margin-bottom: 8px; }
+.flow__step { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--ip-text); padding: 6px 0; }
+.flow__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ip-gold); }
+.flow__step--result { color: var(--ip-green); font-weight: 600; }
+.flow__step--result .flow__dot { background: var(--ip-green); }
 
 .period { padding: 16px 24px 20px; }
-.period__label { font-size: 12px; color: var(--ip-text-muted); margin-bottom: 8px; }
-.period__chip { display: inline-flex; align-items: center; height: 28px; padding: 0 14px; border-radius: 14px; background: var(--ip-tint-blue); color: var(--ip-navy); font-size: 12px; font-weight: 600; }
+.period__label { font-size: 9px; color: var(--ip-text-muted); margin-bottom: 8px; }
+.period__chip { display: inline-flex; align-items: center; height: 28px; padding: 0 14px; border-radius: 14px; background: var(--ip-tint-blue); color: var(--ip-navy); font-size: 11px; font-weight: 600; }
 .period__base { margin-top: 10px; font-size: 11px; color: var(--ip-text-muted); }
+
+.period-btn { background: var(--ip-bg) !important; color: var(--ip-text) !important; border-radius: 14px !important; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; }
 
 .bottom-nav { border-top: 1px solid var(--ip-border); }
 </style>
