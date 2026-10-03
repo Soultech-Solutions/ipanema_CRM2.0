@@ -37,7 +37,8 @@
   }
 
   function insightTone (tipo: string): ChipTone {
-    if (tipo === 'risco' || tipo === 'alerta') return 'error'
+    if (tipo === 'risco') return 'error'
+    if (tipo === 'alerta') return 'gold'
     if (tipo === 'oportunidade') return 'success'
     return 'info'
   }
@@ -64,22 +65,23 @@
   }
 
   // ── DADOS DE EXEMPLO (do Figma) — a base ainda não tem faturamento mensal, meta nem segmento ──
-  const sampleSeries = [90, 105, 95, 120, 125, 135, 130, 150]
+  const sampleSeries = [63, 74, 67, 84, 88, 95, 90, 100]
+  const barColors = ['#17324d', '#24496b', '#2f6b9a', '#1d7a4d']
   const bars = computed(() => {
     const now = new Date()
     return sampleSeries.map((value, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (sampleSeries.length - 1 - i), 1)
       const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
-      return { value, label }
+      return { value, label, color: barColors[i % barColors.length] }
     })
   })
 
   const sampleSegments = [
-    { nome: 'Mineração', pct: 28 },
-    { nome: 'Papel & Celulose', pct: 21 },
-    { nome: 'Siderurgia', pct: 16 },
-    { nome: 'Agro', pct: 14 },
-    { nome: 'Outros', pct: 21 },
+    { nome: 'Mineração', pct: 28, color: '#17324d' },
+    { nome: 'Papel & Celulose', pct: 21, color: '#2f6b9a' },
+    { nome: 'Siderurgia', pct: 16, color: '#d9232e' },
+    { nome: 'Agro', pct: 14, color: '#1d7a4d' },
+    { nome: 'Outros', pct: 21, color: '#b39b5e' },
   ]
 </script>
 
@@ -145,17 +147,18 @@
         <v-col cols="12" lg="8">
           <SectionCard class="h-100" subtitle="Evolução dos últimos 8 meses" title="Faturamento x Meta">
             <template #actions>
-              <StatusChip label="Dado de exemplo" tone="gold" />
+              <StatusChip label="Meta 30,0 mi · dado de exemplo" tone="gold" />
             </template>
             <div class="bars">
-              <div v-for="(b, i) in bars" :key="i" class="bars__col">
-                <div
-                  class="bars__bar"
-                  :class="{ 'bars__bar--last': i === bars.length - 1 }"
-                  :style="{ height: `${b.value}px` }"
-                />
-                <span class="bars__label">{{ b.label }}</span>
-              </div>
+              <div
+                v-for="(b, i) in bars"
+                :key="i"
+                class="bars__bar"
+                :style="{ height: `${b.value * 1.7}px`, background: b.color }"
+              />
+            </div>
+            <div class="bars-labels">
+              <span v-for="(b, i) in bars" :key="i">{{ b.label }}</span>
             </div>
           </SectionCard>
         </v-col>
@@ -170,7 +173,9 @@
                 <span>{{ seg.nome }}</span>
                 <span class="seg__pct">{{ seg.pct }}%</span>
               </div>
-              <div class="seg__track"><div class="seg__fill" :style="{ width: `${seg.pct * 3}%` }" /></div>
+              <div class="seg__track">
+                <div class="seg__fill" :style="{ width: `${seg.pct * 3}%`, background: seg.color }" />
+              </div>
             </div>
           </SectionCard>
         </v-col>
@@ -180,7 +185,7 @@
       <v-row>
         <v-col cols="12" lg="6">
           <SectionCard class="h-100" subtitle="O que exige ação da diretoria" title="Riscos e oportunidades">
-            <div v-for="ins in store.insights.slice(0, 3)" :key="ins.id" class="row-item">
+            <div v-for="ins in store.insights.slice(0, 3)" :key="ins.id" class="row-item row-item--soft">
               <StatusChip :label="insightLabel(ins.tipo)" :tone="insightTone(ins.tipo)" />
               <div>
                 <div class="row-item__title">{{ ins.titulo }}</div>
@@ -192,25 +197,24 @@
         </v-col>
 
         <v-col cols="12" lg="6">
-          <SectionCard class="h-100" large title="Insight da IA">
+          <SectionCard class="h-100 ia-card" large title="Insight da IA">
             <template v-if="topRecomendacao">
               <div class="ia-headline">{{ topRecomendacao.titulo }}</div>
-              <p class="ip-card-subtitle mt-3 mb-0">
+              <p class="ia-sub mt-4 mb-0">
                 {{ topRecomendacao.clienteNome || 'Carteira geral' }}
                 <template v-if="topRecomendacao.impactoEstimado">
                   • impacto {{ formatCurrency(topRecomendacao.impactoEstimado, true) }}
                 </template>
               </p>
               <v-btn
-                class="mt-6"
-                color="primary"
+                class="ia-btn mt-8"
                 variant="flat"
                 @click="router.push('/analista')"
               >
                 Ver análise completa
               </v-btn>
             </template>
-            <div v-else class="ip-card-subtitle">Nenhum insight disponível ainda.</div>
+            <div v-else class="ia-sub">Nenhum insight disponível ainda.</div>
           </SectionCard>
         </v-col>
       </v-row>
@@ -219,7 +223,7 @@
       <v-row>
         <v-col cols="12" lg="6">
           <SectionCard class="h-100" subtitle="Ordenado por prioridade" title="O que precisa de ação hoje">
-            <div v-for="rec in store.recomendacoes.slice(0, 5)" :key="rec.id" class="row-item">
+            <div v-for="rec in store.recomendacoes.slice(0, 5)" :key="rec.id" class="row-item row-item--soft">
               <StatusChip :label="rec.acao" :tone="prioridadeTone(rec.prioridade)" />
               <span class="row-item__sub">
                 {{ rec.titulo }} — {{ rec.clienteNome || 'Carteira geral' }}
@@ -235,7 +239,7 @@
             <div
               v-for="client in store.clientesRisco"
               :key="client.id"
-              class="row-item row-item--click"
+              class="row-item row-item--soft row-item--click"
               @click="router.push(`/clientes/${client.id}`)"
             >
               <span class="row-item__title flex-grow-1">{{ client.nome }}</span>
@@ -250,26 +254,35 @@
 </template>
 
 <style scoped>
-.bars { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; height: 190px; padding-top: 16px; border-bottom: 1px solid var(--ip-border); }
-.bars__col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
-.bars__bar { width: 100%; max-width: 65px; border-radius: 10px 10px 0 0; background: var(--ip-tint-blue); }
-.bars__bar--last { background: var(--ip-navy); }
-.bars__label { position: absolute; }
-.bars { position: relative; padding-bottom: 0; margin-bottom: 28px; }
-.bars__col { position: relative; }
-.bars__label { bottom: -22px; font-size: 11px; color: var(--ip-text-muted); text-transform: capitalize; }
+/* Gráfico de barras (exemplo) */
+.bars { display: flex; align-items: flex-end; gap: 14px; height: 180px; border-bottom: 1px solid var(--ip-border); }
+.bars__bar { flex: 1; max-width: 70px; border-radius: 8px 8px 0 0; }
+.bars-labels { display: flex; gap: 14px; margin-top: 8px; }
+.bars-labels span { flex: 1; max-width: 70px; text-align: center; font-size: 11px; color: var(--ip-text-muted); text-transform: capitalize; }
+.bars, .bars-labels { justify-content: space-between; }
+.bars-labels span, .bars__bar { max-width: none; }
 
+/* Segmentos (exemplo) */
 .seg { margin-bottom: 14px; }
 .seg__head { display: flex; justify-content: space-between; font-size: 13px; color: var(--ip-text); margin-bottom: 6px; }
 .seg__pct { font-weight: 600; }
 .seg__track { height: 6px; border-radius: 3px; background: var(--ip-tint-blue); }
-.seg__fill { height: 100%; border-radius: 3px; background: var(--ip-navy); }
+.seg__fill { height: 100%; border-radius: 3px; max-width: 100%; }
 
-.row-item { display: flex; align-items: center; gap: 14px; padding: 14px; margin-bottom: 10px; border: 1px solid var(--ip-border); border-radius: 12px; }
+/* Linhas de lista com fundo suave (sem borda) */
+.row-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 10px; border-radius: 12px; }
+.row-item--soft { background: var(--ip-bg); }
+.row-item--soft > :first-child { min-width: 92px; justify-content: center; }
 .row-item__title { font-size: 14px; font-weight: 600; color: var(--ip-text); }
 .row-item__sub { font-size: 13px; color: var(--ip-text-muted); }
 .row-item--click { cursor: pointer; }
-.row-item--click:hover { background: var(--ip-bg); }
+.row-item--click > :first-child { min-width: 0; justify-content: flex-start; }
+.row-item--click:hover { background: var(--ip-tint-blue); }
 
-.ia-headline { font-size: 23px; font-weight: 700; line-height: 1.25; color: var(--ip-navy); }
+/* Card Insight da IA (navy escuro) */
+.ia-card { background: #102338 !important; border-color: #102338 !important; }
+.ia-card :deep(.ip-card-title) { color: rgba(255, 255, 255, 0.7); font-size: 12px; font-weight: 600; }
+.ia-headline { font-size: 24px; font-weight: 700; line-height: 1.3; color: #fff; }
+.ia-sub { font-size: 13px; line-height: 1.5; color: rgba(255, 255, 255, 0.75); }
+.ia-btn { background: var(--ip-navy) !important; color: #fff !important; }
 </style>
