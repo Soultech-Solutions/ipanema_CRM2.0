@@ -35,7 +35,7 @@ const router = createRouter({
         {
           path: 'funil',
           name: 'funnel',
-          ...placeholder('Funil Comercial', 'mdi-filter-variant', 'Conversão, velocidade e recuperação das cotações.'),
+          component: () => import('@/views/FunilComercialView.vue'),
           meta: { title: 'Funil Comercial', subtitle: 'Conversão, velocidade e recuperação das cotações.', figmaHeader: true },
         },
         {
