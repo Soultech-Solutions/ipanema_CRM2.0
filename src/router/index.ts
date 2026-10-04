@@ -59,7 +59,7 @@ const router = createRouter({
         {
           path: 'precos-margem',
           name: 'pricing',
-          ...placeholder('Preços, Markup e Margem', 'mdi-percent-outline', 'Rentabilidade por cliente, vendedor e produto — com foco em decisão.'),
+          component: () => import('@/views/PrecosMargemView.vue'),
           meta: { title: 'Preços, Markup e Margem', subtitle: 'Rentabilidade por cliente, vendedor e produto — com foco em decisão.', figmaHeader: true },
         },
         {
