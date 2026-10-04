@@ -121,7 +121,7 @@
                   <td>{{ s.margem }}</td>
                   <td>{{ s.cresc }}</td>
                   <td class="seg__strong">{{ s.leitura }}</td>
-                  <td><StatusChip :label="s.prioridade" :tone="s.tom" /></td>
+                  <td class="seg__strong">{{ s.prioridade }}</td>
                 </tr>
               </tbody>
             </table>
