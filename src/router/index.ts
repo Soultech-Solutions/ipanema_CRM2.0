@@ -53,7 +53,7 @@ const router = createRouter({
         {
           path: 'vendedores',
           name: 'sellers',
-          component: () => import('@/views/VendedoresView.vue'),
+          component: () => import('@/views/VendedoresView.vue'), 
           meta: { title: 'Vendedores', subtitle: 'Performance, qualidade de carteira e oportunidades de evolução.', figmaHeader: true },
         },
         {
