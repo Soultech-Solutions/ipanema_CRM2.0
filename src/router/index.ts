@@ -71,7 +71,7 @@ const router = createRouter({
         {
           path: 'mercado-segmentos',
           name: 'market',
-          ...placeholder('Mercado e Segmentos', 'mdi-chart-bubble', 'Onde a Ipanema cresce, perde espaço e ainda é pouco explorada.'),
+          component: () => import('@/views/MercadoSegmentosView.vue'),
           meta: { title: 'Mercado e Segmentos', subtitle: 'Onde a Ipanema cresce, perde espaço e ainda é pouco explorada.', figmaHeader: true },
         },
         {
