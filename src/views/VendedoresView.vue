@@ -96,7 +96,7 @@
 
     <!-- Oportunidades de melhoria + Ação recomendada -->
     <v-row>
-      <v-col cols="12" lg="7">
+      <v-col cols="12" lg="6">
         <SectionCard class="h-100" subtitle="Ações sugeridas por vendedor" title="Oportunidades de melhoria">
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
@@ -111,7 +111,7 @@
         </SectionCard>
       </v-col>
 
-      <v-col cols="12" lg="5">
+      <v-col cols="12" lg="6">
         <SectionCard class="h-100 ia-card" large title="Ação recomendada hoje">
           <div class="ia-headline">12 oportunidades somam R$ 1,4 mi e estão sem follow-up.</div>
           <p class="ia-sub mt-4 mb-0">
