@@ -137,14 +137,14 @@
 </template>
 
 <style scoped>
-.queue-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 12px 0 20px; padding: 22px 24px; background: #102338 !important; border-color: #102338 !important; }
+.queue-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 24px 0 20px; padding: 22px 24px; background: #102338 !important; border-color: #102338 !important; }
 .queue-banner__title { font-size: 18px; font-weight: 700; color: #fff; }
 .queue-banner__sub { margin-top: 6px; font-size: 13px; color: rgba(255, 255, 255, 0.75); }
 .queue-banner__pill { display: inline-flex; align-items: center; height: 28px; padding: 0 18px; border-radius: 14px; background: var(--ip-tint-green); color: var(--ip-green); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
 
 .opp { margin-bottom: 12px; padding: 14px 20px; }
 .opp__row { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-.opp__type { min-width: 130px; justify-content: center; }
+.opp__type { width: 150px; flex-shrink: 0; justify-content: center; }
 .opp__who { flex: 1 1 220px; min-width: 0; }
 .opp__name { font-size: 14px; font-weight: 600; color: var(--ip-text); }
 .opp__sub { margin-top: 2px; font-size: 12px; color: var(--ip-text-muted); }
