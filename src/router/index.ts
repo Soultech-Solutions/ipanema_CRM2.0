@@ -78,7 +78,7 @@ const router = createRouter({
           path: 'oportunidades',
           name: 'opportunities',
           component: () => import('@/views/RecommendationsView.vue'),
-          meta: { title: 'Oportunidades', subtitle: 'Central de ações comerciais identificadas pela plataforma.' },
+          meta: { title: 'Oportunidades', subtitle: 'Central de ações comerciais identificadas pela plataforma.', figmaHeader: true },
         },
         { path: 'recomendacoes', redirect: '/oportunidades' },
         {
