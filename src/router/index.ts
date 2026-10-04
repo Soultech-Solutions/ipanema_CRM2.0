@@ -65,7 +65,7 @@ const router = createRouter({
         {
           path: 'marcas-produtos',
           name: 'brands-products',
-          ...placeholder('Marcas e Produtos', 'mdi-tag-multiple-outline', 'Desempenho, crescimento e potencial de expansão do portfólio.'),
+          component: () => import('@/views/MarcasProdutosView.vue'),
           meta: { title: 'Marcas e Produtos', subtitle: 'Desempenho, crescimento e potencial de expansão do portfólio.', figmaHeader: true },
         },
         {
