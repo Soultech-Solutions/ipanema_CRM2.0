@@ -211,7 +211,7 @@
         :exact="item.exact"
         :to="item.to"
         :value="item.to"
-      >>
+      >
         <v-badge
           color="error"
           :content="alertCount"
@@ -267,10 +267,12 @@
 .m-head__sub { margin-top: 4px; font-size: 11px; color: var(--ip-text-muted); }
 
 .bottom-nav { border-top: 1px solid var(--ip-border); }
+.bottom-nav :deep(.v-btn) { font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; }
 .bottom-nav :deep(.v-btn--active > .v-btn__overlay) { opacity: 0; }
 </style>
+
+<!-- Estilo GLOBAL (sem scoped, de propósito): KPIs no celular, Figma M01–M04 -->
 <style>
-/* Mobile (Figma M01–M04): KPIs em 2 colunas e compactos — global de propósito */
 @media (max-width: 599.98px) {
   .v-col-12.v-col-sm-6 {
     flex: 0 0 50% !important;
