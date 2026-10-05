@@ -33,4 +33,10 @@
 .kpi-card__value { font-size: 25px; font-weight: 700; line-height: 1.05; color: var(--ip-text); }
 .kpi-card__label { margin-top: 8px; font-size: 12px; font-weight: 500; color: var(--ip-text-muted); }
 .kpi-card__delta { margin-top: 14px; }
+@media (max-width: 599.98px) {
+  .kpi-card { padding: 14px; min-height: 100px; }
+  .kpi-card__value { font-size: 20px; }
+  .kpi-card__label { font-size: 11px; }
+  .kpi-card__delta { margin-top: 10px; }
+}
 </style>
