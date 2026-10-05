@@ -47,23 +47,14 @@ body,
 .ip-card-title { font-size: 18px; font-weight: 700; color: var(--ip-text); }
 .ip-card-subtitle { font-size: 13px; color: var(--ip-text-muted); }
 /* Mobile: os KPIs ficam 2 por linha (Figma M01–M04) */
-@media (max-width: 599.98px) {
-  .v-col-12.v-col-sm-6.v-col-lg-3 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
-}
-/* Mobile: os KPIs ficam 2 por linha (Figma M01–M04) */
+/* Mobile (Figma M01–M04): KPIs em 2 colunas e compactos */
 @media (max-width: 599.98px) {
   .v-col-12.v-col-sm-6 {
-    flex: 0 0 50%;
-    max-width: 50%;
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
   }
-}
-/* Mobile: os KPIs ficam 2 por linha (Figma M01–M04) */
-@media (max-width: 599.98px) {
-  .v-col-12.v-col-sm-6 {
-    flex: 0 0 50%;
-    max-width: 50%;
-  }
+  .kpi-card { padding: 14px !important; min-height: 100px !important; }
+  .kpi-card__value { font-size: 20px !important; }
+  .kpi-card__label { font-size: 11px !important; }
+  .kpi-card__delta { margin-top: 10px !important; }
 }

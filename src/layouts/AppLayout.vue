@@ -205,7 +205,13 @@
       grow
       height="60"
     >
-      <v-btn v-for="item in mobileNav" :key="item.to" :to="item.to" :value="item.to">
+      <v-btn
+        v-for="item in mobileNav"
+        :key="item.to"
+        :exact="item.exact"
+        :to="item.to"
+        :value="item.to"
+      >>
         <v-badge
           color="error"
           :content="alertCount"
@@ -261,5 +267,5 @@
 .m-head__sub { margin-top: 4px; font-size: 11px; color: var(--ip-text-muted); }
 
 .bottom-nav { border-top: 1px solid var(--ip-border); }
-.bottom-nav :deep(.v-btn) { font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; }
+.bottom-nav :deep(.v-btn--active > .v-btn__overlay) { opacity: 0; }
 </style>
