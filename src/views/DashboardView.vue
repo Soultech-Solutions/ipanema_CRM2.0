@@ -300,9 +300,9 @@
 .ia-btn { background: var(--ip-navy) !important; color: #fff !important; }
 
 /* Prioridades (celular) */
-.m-title { margin: 8px 0 12px; font-size: 16px; font-weight: 700; color: var(--ip-text); }
+.m-title { margin: 24px 0 12px; font-size: 16px; font-weight: 700; color: var(--ip-text); }
 .m-prio { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; padding: 14px 16px; border: 1px solid var(--ip-border); border-radius: 12px; background: #fff; cursor: pointer; }
-.m-prio__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 600; color: var(--ip-text); }
+.m-prio__text { min-width: 0; font-size: 12px; font-weight: 600; line-height: 1.4; color: var(--ip-text); }
 
 @media (max-width: 599.98px) {
   .bars { height: 150px; }
