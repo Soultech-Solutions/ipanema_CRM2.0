@@ -28,11 +28,23 @@
   /** Header do Figma (título + subtítulo + período) — ligado por rota, conforme cada tela é migrada */
   const showFigmaHeader = computed(() => route.meta.figmaHeader === true)
 
-  const periodLabel = computed(() => {
-    const d = new Date()
-    const m = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
-    return `${m.charAt(0).toUpperCase()}${m.slice(1)}/${d.getFullYear()}`
+  function isActive (item: NavItem) {
+    return item.exact ? route.path === item.to : route.path.startsWith(item.to)
+  }
+
+  /** No mobile o título é o nome curto do item da navegação (Alertas, Analista IA...) */
+  const mobileTitle = computed(() => {
+    const item = [...mainNav, ...operationsNav].find(i => isActive(i))
+    return item?.title ?? pageTitle.value
   })
+
+  const periodDate = new Date()
+  const periodMonth = (() => {
+    const m = periodDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+    return `${m.charAt(0).toUpperCase()}${m.slice(1)}`
+  })()
+  const periodLabel = `${periodMonth}/${periodDate.getFullYear()}`
+  const periodLabelShort = `${periodMonth}/${String(periodDate.getFullYear()).slice(2)}`
 
   const baseLabel = computed(() => {
     if (commercial.importing || commercial.loading) return 'Carregando base…'
@@ -41,10 +53,6 @@
   })
 
   const alertCount = computed(() => dashboard.alertasNaoLidos || 0)
-
-  function isActive (item: NavItem) {
-    return item.exact ? route.path === item.to : route.path.startsWith(item.to)
-  }
 
   function toggleTheme () {
     theme.global.name.value = isDark.value ? 'ipanemaLight' : 'ipanemaDark'
@@ -71,10 +79,8 @@
           <div class="brand__name">IPANEMA</div>
           <div class="brand__sub">ROLAMENTOS</div>
         </div>
-
         <span class="brand__since">DESDE 1969</span>
       </div>
-
       <div class="brand-product">Gestão Ipanema</div>
 
       <v-list class="px-4" density="comfortable" nav>
@@ -100,7 +106,6 @@
           title="Operação"
           @click="showOperations = !showOperations"
         />
-
         <template v-if="showOperations">
           <v-list-item
             v-for="item in operationsNav"
@@ -119,7 +124,6 @@
 
       <div class="flow">
         <div class="flow__title">DECISÃO COMERCIAL</div>
-
         <div
           v-for="(step, i) in decisionFlow"
           :key="step"
@@ -140,7 +144,7 @@
     </v-navigation-drawer>
 
     <!-- Topbar -->
-    <v-app-bar class="app-bar" flat :height="mdAndDown ? 72 : (showFigmaHeader ? 82 : 64)">
+    <v-app-bar class="app-bar" flat :height="mdAndDown ? 64 : (showFigmaHeader ? 82 : 64)">
       <template v-if="mdAndDown">
         <div class="brand brand--mobile">
           <div>
@@ -148,9 +152,8 @@
             <div class="brand__sub">ROLAMENTOS</div>
           </div>
         </div>
-
         <v-spacer />
-        <span class="period__chip me-4">{{ periodLabel }}</span>
+        <span class="period__chip me-4">{{ periodLabelShort }}</span>
       </template>
 
       <template v-else>
@@ -158,18 +161,14 @@
           <div class="ip-h1 topbar-title">{{ pageTitle }}</div>
           <div v-if="showFigmaHeader && pageSubtitle" class="ip-card-subtitle mt-1">{{ pageSubtitle }}</div>
         </div>
-
         <v-spacer />
-
         <template v-if="showFigmaHeader">
           <v-btn class="period-btn me-2" size="small" variant="flat">Últimos 30 dias</v-btn>
           <v-btn class="period-btn me-4" size="small" variant="flat">Comparar período</v-btn>
         </template>
-
         <v-btn icon variant="text" @click="toggleTheme">
           <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
         </v-btn>
-
         <v-menu v-if="authEnabled" location="bottom end">
           <template #activator="{ props }">
             <v-btn class="ms-1 me-4" v-bind="props" variant="text">
@@ -178,7 +177,6 @@
               <v-icon icon="mdi-chevron-down" size="18" />
             </v-btn>
           </template>
-
           <v-list density="compact" min-width="200">
             <v-list-item v-if="auth.user?.email" :subtitle="auth.user.email" title="Usuário" />
             <v-divider class="my-1" />
@@ -190,14 +188,23 @@
 
     <v-main class="app-main">
       <v-container class="pa-4 pa-md-8" fluid>
-        <!-- Título no mobile (a topbar mobile só tem marca + período) -->
-        <h1 v-if="mdAndDown" class="ip-h2 mb-4">{{ pageTitle }}</h1>
+        <!-- Título no mobile: nome curto + "Gestão Ipanema" (Figma M01–M04) -->
+        <div v-if="mdAndDown" class="m-head">
+          <h1 class="m-head__title">{{ mobileTitle }}</h1>
+          <div class="m-head__sub">Gestão Ipanema</div>
+        </div>
         <router-view />
       </v-container>
     </v-main>
 
     <!-- Barra inferior (mobile) -->
-    <v-bottom-navigation v-if="mdAndDown" class="bottom-nav" grow height="56">
+    <v-bottom-navigation
+      v-if="mdAndDown"
+      class="bottom-nav"
+      color="error"
+      grow
+      height="60"
+    >
       <v-btn v-for="item in mobileNav" :key="item.to" :to="item.to" :value="item.to">
         <v-badge
           color="error"
@@ -206,7 +213,6 @@
         >
           <v-icon :icon="item.icon" />
         </v-badge>
-
         <span>{{ item.title }}</span>
       </v-btn>
     </v-bottom-navigation>
@@ -220,7 +226,7 @@
 .topbar-title { font-size: 22px; line-height: 1.2; }
 
 .brand { display: flex; align-items: flex-start; justify-content: space-between; padding: 18px 24px 0; }
-.brand--mobile { padding: 0 0 0 20px; }
+.brand--mobile { padding: 0 0 0 16px; }
 .brand__name { font-weight: 800; font-size: 22px; color: var(--ip-red); line-height: 1; letter-spacing: 0.01em; }
 .brand__sub { font-weight: 700; font-size: 9px; color: var(--ip-red); line-height: 1.6; letter-spacing: 0.12em; }
 .brand__since { font-size: 7px; color: var(--ip-gold); font-weight: 600; letter-spacing: 0.08em; }
@@ -250,5 +256,10 @@
 
 .period-btn { background: var(--ip-bg) !important; color: var(--ip-text) !important; border-radius: 14px !important; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; }
 
+.m-head { margin-bottom: 16px; }
+.m-head__title { font-size: 22px; font-weight: 700; line-height: 1.2; color: var(--ip-text); }
+.m-head__sub { margin-top: 4px; font-size: 11px; color: var(--ip-text-muted); }
+
 .bottom-nav { border-top: 1px solid var(--ip-border); }
+.bottom-nav :deep(.v-btn) { font-size: 11px; font-weight: 600; text-transform: none; letter-spacing: 0; }
 </style>
