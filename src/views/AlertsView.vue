@@ -25,9 +25,8 @@
 
   const filtered = computed(() => {
     const base = onlyUnread.value ? items.value.filter(a => !a.lido) : items.value
-    return [...base].sort((a, b) => severityOrder[a.severidade] - severityOrder[b.severidade])
+    return base.toSorted((a, b) => severityOrder[a.severidade] - severityOrder[b.severidade])
   })
-
   const selected = computed(() =>
     filtered.value.find(a => a.id === selectedId.value) ?? filtered.value[0] ?? null)
 
@@ -61,6 +60,7 @@
           :value="String(criticos)"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-gold)"
@@ -69,6 +69,7 @@
           :value="String(atencao)"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -77,6 +78,7 @@
           :value="String(informativos)"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-navy)"
@@ -121,13 +123,14 @@
                 :label="severityInfo[alert.severidade].label"
                 :tone="severityInfo[alert.severidade].tone"
               />
+
               <div class="alert-row__text">
                 <div class="alert-row__title">{{ alert.titulo }}</div>
                 <div class="alert-row__sub">{{ formatDate(alert.createdAt) }}</div>
               </div>
             </div>
 
-            <div v-if="!filtered.length" class="ip-card-subtitle">
+            <div v-if="filtered.length === 0" class="ip-card-subtitle">
               Nenhum alerta {{ onlyUnread ? 'não lido' : '' }} no momento.
             </div>
           </div>
@@ -155,6 +158,7 @@
               >
                 Ver cliente
               </v-btn>
+
               <v-btn
                 v-if="!selected.lido"
                 class="detail-btn detail-btn--light"
@@ -163,9 +167,11 @@
               >
                 Marcar como lido
               </v-btn>
+
               <span v-else class="detail-read">Alerta lido</span>
             </div>
           </template>
+
           <div v-else class="detail-text">Selecione um alerta para ver o detalhe.</div>
         </SectionCard>
       </v-col>

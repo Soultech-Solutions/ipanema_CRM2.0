@@ -24,6 +24,7 @@
         <h1 class="text-h4 font-weight-bold mb-1 brand-title">
           Resposta via portal do cliente
         </h1>
+
         <p class="text-body-2 text-medium-emphasis mb-0">
           Apoio para clientes que exigem resposta fora do e-mail, como grandes contas.
         </p>
@@ -37,6 +38,7 @@
 
     <v-card class="mb-4 pa-4" color="info" rounded="lg" variant="tonal">
       <div class="font-weight-bold mb-1">Assistente de preenchimento — conceito de evolução</div>
+
       <div class="text-body-2">
         A plataforma prepara os campos e abre o portal do cliente. O vendedor revisa e confirma o envio no ambiente externo.
       </div>
@@ -46,7 +48,13 @@
       <!-- Campos preparados -->
       <v-col cols="12" lg="7">
         <v-card class="pa-5 h-100" rounded="xl" variant="outlined">
-          <v-chip class="mb-3" color="error" rounded="pill" size="small" variant="tonal">
+          <v-chip
+            class="mb-3"
+            color="error"
+            rounded="pill"
+            size="small"
+            variant="tonal"
+          >
             Cliente: Vale
           </v-chip>
 
@@ -76,7 +84,13 @@
             <li v-for="(p, i) in passos" :key="i">{{ p }}</li>
           </ol>
 
-          <v-chip class="mb-4" color="warning" rounded="pill" size="small" variant="tonal">
+          <v-chip
+            class="mb-4"
+            color="warning"
+            rounded="pill"
+            size="small"
+            variant="tonal"
+          >
             Human-in-the-loop
           </v-chip>
 

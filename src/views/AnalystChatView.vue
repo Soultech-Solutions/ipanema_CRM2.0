@@ -19,7 +19,7 @@
 
   // Última resposta da IA (alimenta o card "Fontes analisadas")
   const lastAnswer = computed(() =>
-    [...store.messages].reverse().find(m => m.role === 'assistant' && !m.pending) ?? null)
+    store.messages.findLast(m => m.role === 'assistant' && !m.pending) ?? null)
 
   async function scrollBottom () {
     await nextTick()
@@ -78,6 +78,7 @@
           variant="plain"
           @keydown.enter.prevent="submit"
         />
+
         <v-btn
           class="ask__btn"
           :disabled="!input.trim() || !store.canSend"
@@ -91,6 +92,7 @@
 
       <!-- Perguntas rápidas -->
       <div class="quick-label">Perguntas rápidas</div>
+
       <div class="quick">
         <button
           v-for="s in store.suggestions"
@@ -159,10 +161,12 @@
             {{ src.label }}
           </div>
         </template>
+
         <p v-else class="sources__empty">As fontes usadas pela IA aparecem aqui depois da resposta.</p>
 
         <div class="sources__footer">
           <div class="sources__mode">Modo: {{ endpointMode }}</div>
+
           <v-btn
             class="sources__btn"
             prepend-icon="mdi-refresh"

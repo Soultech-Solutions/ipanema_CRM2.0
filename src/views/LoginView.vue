@@ -30,18 +30,20 @@
 
 <template>
   <div class="login-page">
-    <div class="login-atmosphere" aria-hidden="true" />
+    <div aria-hidden="true" class="login-atmosphere" />
 
     <div class="login-panel">
       <div class="login-brand mb-8">
         <img
-          :src="logoIpanema"
           alt="Ipanema Rolamentos"
           class="login-logo mb-4"
+          :src="logoIpanema"
         >
+
         <h1 class="brand-wordmark login-title">
           IPANEMA
         </h1>
+
         <p class="login-subtitle mb-0">
           CRM 2.0
         </p>
@@ -52,25 +54,25 @@
           v-model="email"
           autocomplete="username"
           class="mb-2"
+          :disabled="auth.loading"
           label="E-mail"
           prepend-inner-icon="mdi-email-outline"
+          required
           type="email"
           variant="outlined"
-          :disabled="auth.loading"
-          required
         />
 
         <v-text-field
           v-model="password"
+          :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
           autocomplete="current-password"
           class="mb-2"
+          :disabled="auth.loading"
           label="Senha"
           prepend-inner-icon="mdi-lock-outline"
-          :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
-          :disabled="auth.loading"
+          required
           :type="showPassword ? 'text' : 'password'"
           variant="outlined"
-          required
           @click:append-inner="showPassword = !showPassword"
         />
 
@@ -87,9 +89,9 @@
         <v-btn
           block
           color="primary"
+          :loading="auth.loading"
           size="large"
           type="submit"
-          :loading="auth.loading"
         >
           Entrar
         </v-btn>

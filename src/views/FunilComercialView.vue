@@ -37,6 +37,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" delta="+11,4% · exemplo" label="Valor cotado" value="R$ 18,6 mi" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -46,6 +47,7 @@
           value="34,2%"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-blue)"
@@ -56,6 +58,7 @@
           value="11,8 dias"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-red)"
@@ -75,11 +78,14 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="p in pipeline" :key="p.etapa" class="hbar">
             <span class="hbar__label">{{ p.etapa }}</span>
+
             <div class="hbar__track">
               <div class="hbar__fill" :style="{ width: `${(p.valor / pipelineMax) * 100}%`, background: p.color }" />
             </div>
+
             <span class="hbar__value">{{ p.valor }}</span>
           </div>
         </SectionCard>
@@ -90,11 +96,14 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="m in motivosPerda" :key="m.motivo" class="hbar">
             <span class="hbar__label">{{ m.motivo }}</span>
+
             <div class="hbar__track">
               <div class="hbar__fill" :style="{ width: `${(m.pct / motivoMax) * 100}%`, background: m.color }" />
             </div>
+
             <span class="hbar__value">{{ m.pct }}%</span>
           </div>
         </SectionCard>
@@ -106,6 +115,7 @@
       <template #actions>
         <StatusChip label="Dado de exemplo" tone="gold" />
       </template>
+
       <div class="table-wrap">
         <table class="recovery">
           <thead>
@@ -118,6 +128,7 @@
               <th>Ação</th>
             </tr>
           </thead>
+
           <tbody>
             <tr v-for="r in recuperacao" :key="r.cotacao">
               <td class="recovery__strong">{{ r.cliente }}</td>

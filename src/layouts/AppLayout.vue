@@ -71,8 +71,10 @@
           <div class="brand__name">IPANEMA</div>
           <div class="brand__sub">ROLAMENTOS</div>
         </div>
+
         <span class="brand__since">DESDE 1969</span>
       </div>
+
       <div class="brand-product">Gestão Ipanema</div>
 
       <v-list class="px-4" density="comfortable" nav>
@@ -98,6 +100,7 @@
           title="Operação"
           @click="showOperations = !showOperations"
         />
+
         <template v-if="showOperations">
           <v-list-item
             v-for="item in operationsNav"
@@ -116,6 +119,7 @@
 
       <div class="flow">
         <div class="flow__title">DECISÃO COMERCIAL</div>
+
         <div
           v-for="(step, i) in decisionFlow"
           :key="step"
@@ -144,6 +148,7 @@
             <div class="brand__sub">ROLAMENTOS</div>
           </div>
         </div>
+
         <v-spacer />
         <span class="period__chip me-4">{{ periodLabel }}</span>
       </template>
@@ -153,14 +158,18 @@
           <div class="ip-h1 topbar-title">{{ pageTitle }}</div>
           <div v-if="showFigmaHeader && pageSubtitle" class="ip-card-subtitle mt-1">{{ pageSubtitle }}</div>
         </div>
+
         <v-spacer />
+
         <template v-if="showFigmaHeader">
           <v-btn class="period-btn me-2" size="small" variant="flat">Últimos 30 dias</v-btn>
           <v-btn class="period-btn me-4" size="small" variant="flat">Comparar período</v-btn>
         </template>
+
         <v-btn icon variant="text" @click="toggleTheme">
           <v-icon>{{ isDark ? 'mdi-weather-sunny' : 'mdi-weather-night' }}</v-icon>
         </v-btn>
+
         <v-menu v-if="authEnabled" location="bottom end">
           <template #activator="{ props }">
             <v-btn class="ms-1 me-4" v-bind="props" variant="text">
@@ -169,6 +178,7 @@
               <v-icon icon="mdi-chevron-down" size="18" />
             </v-btn>
           </template>
+
           <v-list density="compact" min-width="200">
             <v-list-item v-if="auth.user?.email" :subtitle="auth.user.email" title="Usuário" />
             <v-divider class="my-1" />
@@ -196,6 +206,7 @@
         >
           <v-icon :icon="item.icon" />
         </v-badge>
+
         <span>{{ item.title }}</span>
       </v-btn>
     </v-bottom-navigation>

@@ -15,11 +15,13 @@
   <v-card class="kpi-card" rounded="xl" variant="flat">
     <div class="kpi-card__body">
       <span class="kpi-card__bar" :style="{ background: accent }" />
+
       <div>
         <div class="kpi-card__value">{{ value }}</div>
         <div class="kpi-card__label">{{ label }}</div>
       </div>
     </div>
+
     <StatusChip v-if="delta" class="kpi-card__delta" :label="delta" :tone="deltaTone" />
   </v-card>
 </template>

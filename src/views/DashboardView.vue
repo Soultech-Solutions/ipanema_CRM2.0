@@ -20,7 +20,7 @@
   // Conversão média real, calculada a partir dos clientes carregados
   const conversaoMedia = computed(() => {
     const clients = commercial.clients
-    if (!clients.length) return 0
+    if (clients.length === 0) return 0
     const soma = clients.reduce((s, c) => s + (c.taxaConversao ?? 0), 0)
     return Math.round((soma / clients.length) * 100)
   })
@@ -99,7 +99,13 @@
     </v-alert>
 
     <v-row v-if="store.loading && !store.kpis">
-      <v-col v-for="n in 4" :key="n" cols="12" lg="3" sm="6">
+      <v-col
+        v-for="n in 4"
+        :key="n"
+        cols="12"
+        lg="3"
+        sm="6"
+      >
         <v-skeleton-loader type="card" />
       </v-col>
     </v-row>
@@ -114,6 +120,7 @@
             :value="formatCurrency(store.kpis.receitaPotencial, true)"
           />
         </v-col>
+
         <v-col cols="12" lg="3" sm="6">
           <KpiCard
             accent="var(--ip-red)"
@@ -122,6 +129,7 @@
             :value="String(clientesAtencaoCount)"
           />
         </v-col>
+
         <v-col cols="12" lg="3" sm="6">
           <KpiCard
             accent="var(--ip-blue)"
@@ -130,6 +138,7 @@
             :value="`${conversaoMedia}%`"
           />
         </v-col>
+
         <v-col cols="12" lg="3" sm="6">
           <KpiCard
             accent="var(--ip-gold)"
@@ -149,6 +158,7 @@
             <template #actions>
               <StatusChip label="Meta 30,0 mi · dado de exemplo" tone="gold" />
             </template>
+
             <div class="bars">
               <div
                 v-for="(b, i) in bars"
@@ -157,6 +167,7 @@
                 :style="{ height: `${b.value * 1.7}px`, background: b.color }"
               />
             </div>
+
             <div class="bars-labels">
               <span v-for="(b, i) in bars" :key="i">{{ b.label }}</span>
             </div>
@@ -168,11 +179,13 @@
             <template #actions>
               <StatusChip label="Dado de exemplo" tone="gold" />
             </template>
+
             <div v-for="seg in sampleSegments" :key="seg.nome" class="seg">
               <div class="seg__head">
                 <span>{{ seg.nome }}</span>
                 <span class="seg__pct">{{ seg.pct }}%</span>
               </div>
+
               <div class="seg__track">
                 <div class="seg__fill" :style="{ width: `${seg.pct * 3}%`, background: seg.color }" />
               </div>
@@ -187,12 +200,14 @@
           <SectionCard class="h-100" subtitle="O que exige ação da diretoria" title="Riscos e oportunidades">
             <div v-for="ins in store.insights.slice(0, 3)" :key="ins.id" class="row-item row-item--soft">
               <StatusChip :label="insightLabel(ins.tipo)" :tone="insightTone(ins.tipo)" />
+
               <div>
                 <div class="row-item__title">{{ ins.titulo }}</div>
                 <div class="row-item__sub">{{ ins.descricao }}</div>
               </div>
             </div>
-            <div v-if="!store.insights.length" class="ip-card-subtitle">Nenhum insight disponível ainda.</div>
+
+            <div v-if="store.insights.length === 0" class="ip-card-subtitle">Nenhum insight disponível ainda.</div>
           </SectionCard>
         </v-col>
 
@@ -200,12 +215,14 @@
           <SectionCard class="h-100 ia-card" large title="Insight da IA">
             <template v-if="topRecomendacao">
               <div class="ia-headline">{{ topRecomendacao.titulo }}</div>
+
               <p class="ia-sub mt-4 mb-0">
                 {{ topRecomendacao.clienteNome || 'Carteira geral' }}
                 <template v-if="topRecomendacao.impactoEstimado">
                   • impacto {{ formatCurrency(topRecomendacao.impactoEstimado, true) }}
                 </template>
               </p>
+
               <v-btn
                 class="ia-btn mt-8"
                 variant="flat"
@@ -214,6 +231,7 @@
                 Ver análise completa
               </v-btn>
             </template>
+
             <div v-else class="ia-sub">Nenhum insight disponível ainda.</div>
           </SectionCard>
         </v-col>
@@ -225,12 +243,14 @@
           <SectionCard class="h-100" subtitle="Ordenado por prioridade" title="O que precisa de ação hoje">
             <div v-for="rec in store.recomendacoes.slice(0, 5)" :key="rec.id" class="row-item row-item--soft">
               <StatusChip :label="rec.acao" :tone="prioridadeTone(rec.prioridade)" />
+
               <span class="row-item__sub">
                 {{ rec.titulo }} — {{ rec.clienteNome || 'Carteira geral' }}
                 <template v-if="rec.impactoEstimado"> • {{ formatCurrency(rec.impactoEstimado, true) }}</template>
               </span>
             </div>
-            <div v-if="!store.recomendacoes.length" class="ip-card-subtitle">Nenhuma recomendação pendente.</div>
+
+            <div v-if="store.recomendacoes.length === 0" class="ip-card-subtitle">Nenhuma recomendação pendente.</div>
           </SectionCard>
         </v-col>
 
@@ -245,7 +265,8 @@
               <span class="row-item__title flex-grow-1">{{ client.nome }}</span>
               <StatusChip :label="clientReason(client).label" :tone="clientReason(client).tone" />
             </div>
-            <div v-if="!store.clientesRisco.length" class="ip-card-subtitle">Nenhum cliente em atenção no momento.</div>
+
+            <div v-if="store.clientesRisco.length === 0" class="ip-card-subtitle">Nenhum cliente em atenção no momento.</div>
           </SectionCard>
         </v-col>
       </v-row>

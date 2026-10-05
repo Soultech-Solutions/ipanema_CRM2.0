@@ -1,10 +1,10 @@
 <script lang="ts" setup>
   import type { Seller } from '@/types/commercial'
-  import { BASE_COLUMN_MAP } from '@/types/base-comercial'
   import { computed, onMounted, ref } from 'vue'
   import { fetchSellers } from '@/api/directus'
   import { useCommercialStore } from '@/stores/commercial'
   import { useDashboardStore } from '@/stores/dashboard'
+  import { BASE_COLUMN_MAP } from '@/types/base-comercial'
   import { formatCurrency, formatPercent } from '@/utils/format'
 
   const tab = ref('upload')
@@ -193,11 +193,11 @@
               v-model="uploadFiles"
               accept=".xlsx,.xls,.csv"
               chips
+              :disabled="commercial.importing || commercial.syncing"
               label="Selecione a base de clientes (Excel)"
               prepend-icon="mdi-file-excel"
               show-size
               variant="outlined"
-              :disabled="commercial.importing || commercial.syncing"
             />
 
             <v-alert
@@ -294,6 +294,7 @@
                   <th>Indicador derivado</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="m in derivedMetrics" :key="m.to">
                   <td><code>{{ m.from }}</code></td>

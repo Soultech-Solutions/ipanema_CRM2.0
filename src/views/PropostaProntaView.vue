@@ -13,6 +13,7 @@
         <h1 class="text-h4 font-weight-bold mb-1 brand-title">
           Proposta pronta para envio
         </h1>
+
         <p class="text-body-2 text-medium-emphasis mb-0">
           Revise o PDF, o corpo do e-mail e escolha o canal de resposta.
         </p>
@@ -43,6 +44,7 @@
                 <th>Total</th>
               </tr>
             </thead>
+
             <tbody>
               <tr v-for="item in itens" :key="item.produto">
                 <td>{{ item.produto }}</td>
@@ -74,7 +76,13 @@
       <!-- Mensagem ao cliente -->
       <v-col cols="12" lg="5">
         <v-card class="pa-5" rounded="xl" variant="outlined">
-          <v-chip class="mb-3" color="warning" rounded="pill" size="small" variant="tonal">
+          <v-chip
+            class="mb-3"
+            color="warning"
+            rounded="pill"
+            size="small"
+            variant="tonal"
+          >
             Canal sugerido: Portal do cliente
           </v-chip>
 
@@ -92,7 +100,13 @@
             Fico à disposição.
           </div>
 
-          <v-chip class="mb-4" color="info" rounded="pill" size="small" variant="tonal">
+          <v-chip
+            class="mb-4"
+            color="info"
+            rounded="pill"
+            size="small"
+            variant="tonal"
+          >
             Anexo: Proposta_9842.pdf
           </v-chip>
 

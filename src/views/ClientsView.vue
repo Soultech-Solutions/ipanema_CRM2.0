@@ -31,28 +31,28 @@
   const totalInativos = computed(() => store.list.filter(c => c.status === 'inativo').length)
   const ticketMedio = computed(() => {
     const comReceita = store.list.filter(c => (c.receitaAnual ?? 0) > 0)
-    if (!comReceita.length) return 0
+    if (comReceita.length === 0) return 0
     return comReceita.reduce((s, c) => s + c.receitaAnual, 0) / comReceita.length
   })
 
   // ── Curva ABC real, pela receita anual acumulada (A até 80%, B até 95%, C o resto) ──
   const abcById = computed(() => {
-    const sorted = [...store.list].sort((a, b) => (b.receitaAnual ?? 0) - (a.receitaAnual ?? 0))
+    const sorted = store.list.toSorted((a, b) => (b.receitaAnual ?? 0) - (a.receitaAnual ?? 0))
     const total = sorted.reduce((s, c) => s + (c.receitaAnual ?? 0), 0)
     const map = new Map<string, string>()
     let acumulado = 0
     for (const c of sorted) {
       acumulado += c.receitaAnual ?? 0
       const share = total > 0 ? acumulado / total : 1
-      map.set(c.id, share <= 0.8 ? 'A' : share <= 0.95 ? 'B' : 'C')
+      map.set(c.id, share <= 0.8 ? 'A' : (share <= 0.95 ? 'B' : 'C'))
     }
     return map
   })
 
   // ── Clientes prioritários: maior valor em jogo (risco + potencial) ──
   const prioritarios = computed(() =>
-    [...store.list]
-      .sort((a, b) => ((b.receitaEmRisco ?? 0) + (b.receitaPotencial ?? 0)) - ((a.receitaEmRisco ?? 0) + (a.receitaPotencial ?? 0)))
+    store.list
+      .toSorted((a, b) => ((b.receitaEmRisco ?? 0) + (b.receitaPotencial ?? 0)) - ((a.receitaEmRisco ?? 0) + (a.receitaPotencial ?? 0)))
       .slice(0, 4))
 
   function oportunidade (c: { status: string, receitaPotencial: number }) {
@@ -68,7 +68,7 @@
   }
 
   // ── Dados de exemplo (Figma): a base não tem margem por cliente ──
-    const bolhas = [
+  const bolhas = [
     { x: 17, y: 47, d: 32, c: '#17324d' },
     { x: 32, y: 30, d: 48, c: '#1d7a4d' },
     { x: 40, y: 69, d: 34, c: '#d9232e' },
@@ -123,6 +123,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" label="Clientes na carteira" :value="store.list.length.toLocaleString('pt-BR')" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-red)"
@@ -131,6 +132,7 @@
           :value="totalRisco.toLocaleString('pt-BR')"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -140,6 +142,7 @@
           value="43"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-blue)"
@@ -153,13 +156,15 @@
     <!-- Mapa da carteira + Carteira por status -->
     <v-row>
       <v-col cols="12" lg="8">
-                <SectionCard class="h-100" subtitle="Faturamento x margem • tamanho = potencial" title="Mapa da carteira">
+        <SectionCard class="h-100" subtitle="Faturamento x margem • tamanho = potencial" title="Mapa da carteira">
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div class="map">
             <span class="map__axis map__axis--y">↑ Faturamento</span>
             <span class="map__axis map__axis--x">Margem →</span>
+
             <span
               v-for="(b, i) in bolhas"
               :key="i"
@@ -176,10 +181,12 @@
             <StatusChip class="status-row__chip" label="Ativos" tone="success" />
             <span class="status-row__n">{{ totalAtivos.toLocaleString('pt-BR') }}</span>
           </div>
+
           <div class="status-row">
             <StatusChip class="status-row__chip" label="Em risco" tone="error" />
             <span class="status-row__n">{{ totalRisco.toLocaleString('pt-BR') }}</span>
           </div>
+
           <div class="status-row">
             <StatusChip class="status-row__chip" label="Inativos" tone="neutral" />
             <span class="status-row__n">{{ totalInativos.toLocaleString('pt-BR') }}</span>
@@ -204,6 +211,7 @@
                   <th>Ação</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="c in prioritarios" :key="c.id" @click="open(c.id)">
                   <td class="prio__strong">{{ c.nome }}</td>
@@ -213,7 +221,8 @@
                   <td>{{ oportunidade(c) }}</td>
                   <td class="prio__strong">{{ acao(c) }}</td>
                 </tr>
-                <tr v-if="!prioritarios.length">
+
+                <tr v-if="prioritarios.length === 0">
                   <td class="text-center py-6" colspan="6">Nenhum cliente carregado</td>
                 </tr>
               </tbody>
@@ -239,6 +248,7 @@
                 variant="outlined"
               />
             </v-col>
+
             <v-col cols="12" md="3">
               <v-select
                 v-model="statusFilter"
@@ -257,8 +267,8 @@
             :headers="headers"
             hover
             item-value="id"
-            items-per-page-text="Itens por página"
             :items="filtered"
+            items-per-page-text="Itens por página"
             :loading="store.loading"
             loading-text="Carregando clientes…"
             no-data-text="Nenhum cliente encontrado"

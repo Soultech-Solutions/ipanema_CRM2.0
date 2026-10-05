@@ -29,6 +29,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" delta="+8,2% · exemplo" label="Faturamento equipe" value="R$ 28,4 mi" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -38,6 +39,7 @@
           value="94,6%"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-blue)"
@@ -47,6 +49,7 @@
           value="34,2%"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-red)"
@@ -66,6 +69,7 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div class="table-wrap">
             <table class="rank">
               <thead>
@@ -78,6 +82,7 @@
                   <th>Pipeline</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="v in ranking" :key="v.nome">
                   <td class="rank__strong">{{ v.nome }}</td>
@@ -101,8 +106,10 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="m in melhorias" :key="m.vendedor" class="row-item">
             <StatusChip class="row-item__who" :label="m.vendedor" tone="info" />
+
             <div>
               <div class="row-item__title">{{ m.titulo }}</div>
               <div class="row-item__sub">{{ m.sub }}</div>
@@ -114,12 +121,15 @@
       <v-col cols="12" lg="6">
         <SectionCard class="h-100 ia-card" large title="Ação recomendada hoje">
           <div class="ia-headline">12 oportunidades somam R$ 1,4 mi e estão sem follow-up.</div>
+
           <p class="ia-sub mt-4 mb-0">
             Priorize as contas com maior probabilidade de fechamento e margem acima de 30%.
           </p>
+
           <v-btn class="ia-btn mt-8" variant="flat" @click="router.push('/oportunidades')">
             Ver fila comercial
           </v-btn>
+
           <div class="ia-note">Dado de exemplo</div>
         </SectionCard>
       </v-col>

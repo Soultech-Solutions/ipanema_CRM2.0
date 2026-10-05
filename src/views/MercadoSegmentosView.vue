@@ -31,6 +31,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" delta="+14% · exemplo" label="Mineração" value="R$ 7,9 mi" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -40,6 +41,7 @@
           value="R$ 6,0 mi"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-red)"
@@ -50,6 +52,7 @@
           value="R$ 4,6 mi"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-gold)"
@@ -68,11 +71,14 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="s in crescimento" :key="s.nome" class="hbar">
             <span class="hbar__label">{{ s.nome }}</span>
+
             <div class="hbar__track">
               <div class="hbar__fill" :style="{ width: `${s.pct}%`, background: s.color }" />
             </div>
+
             <StatusChip class="hbar__chip" :label="s.delta" :tone="s.tom" />
           </div>
         </SectionCard>
@@ -81,15 +87,19 @@
       <v-col cols="12" lg="4">
         <SectionCard class="h-100 ia-card" large title="Mercado pouco explorado">
           <div class="ia-headline">Agro combina crescimento alto com baixa penetração.</div>
+
           <p class="ia-sub mt-4 mb-0">
             Clientes semelhantes ao perfil atual indicam espaço para ampliar portfólio NTN e Timken.
           </p>
+
           <span class="ia-pill mt-6">Potencial R$ 2,2 mi</span>
+
           <div>
             <v-btn class="ia-btn mt-4" variant="flat" @click="router.push('/clientes')">
               Ver contas-alvo
             </v-btn>
           </div>
+
           <div class="ia-note">Dado de exemplo</div>
         </SectionCard>
       </v-col>
@@ -102,6 +112,7 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div class="table-wrap">
             <table class="seg">
               <thead>
@@ -114,6 +125,7 @@
                   <th>Prioridade</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="s in segmentos" :key="s.nome">
                   <td class="seg__strong">{{ s.nome }}</td>

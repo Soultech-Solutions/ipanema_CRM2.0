@@ -9,8 +9,10 @@
         <div class="ip-card-title">{{ title }}</div>
         <div v-if="subtitle" class="ip-card-subtitle mt-1">{{ subtitle }}</div>
       </div>
+
       <slot name="actions" />
     </header>
+
     <slot />
   </v-card>
 </template>

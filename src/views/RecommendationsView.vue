@@ -16,7 +16,7 @@
     const base = filterPriority.value === 'all'
       ? items.value
       : items.value.filter(r => r.prioridade === filterPriority.value)
-    return [...base].sort((a, b) => (b.impactoEstimado ?? 0) - (a.impactoEstimado ?? 0))
+    return base.toSorted((a, b) => (b.impactoEstimado ?? 0) - (a.impactoEstimado ?? 0))
   })
 
   const potencialTotal = computed(() =>
@@ -49,6 +49,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" label="Potencial total" :value="formatCurrency(potencialTotal, true)" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -58,6 +59,7 @@
           value="R$ 2,3 mi"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-gold)"
@@ -67,6 +69,7 @@
           value="R$ 1,4 mi"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-blue)"
@@ -84,6 +87,7 @@
         <div class="queue-banner__title">Fila inteligente de oportunidades</div>
         <div class="queue-banner__sub">Priorizada por potencial financeiro, probabilidade, margem e urgência.</div>
       </div>
+
       <span class="queue-banner__pill">ALTO POTENCIAL</span>
     </v-card>
 
@@ -104,7 +108,13 @@
     </v-btn-toggle>
 
     <!-- Lista -->
-    <v-card v-for="rec in filtered" :key="rec.id" class="opp" rounded="xl" variant="flat">
+    <v-card
+      v-for="rec in filtered"
+      :key="rec.id"
+      class="opp"
+      rounded="xl"
+      variant="flat"
+    >
       <div class="opp__row">
         <StatusChip class="opp__type" :label="rec.acao" tone="info" />
 
@@ -131,7 +141,7 @@
       <div v-if="openId === rec.id" class="opp__detail">{{ rec.descricao }}</div>
     </v-card>
 
-    <div v-if="!loading && !filtered.length" class="ip-card-subtitle">Nenhuma oportunidade encontrada.</div>
+    <div v-if="!loading && filtered.length === 0" class="ip-card-subtitle">Nenhuma oportunidade encontrada.</div>
     <v-skeleton-loader v-if="loading" class="mt-4" type="card, card" />
   </div>
 </template>

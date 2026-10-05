@@ -33,6 +33,7 @@
       <v-col cols="12" lg="3" sm="6">
         <KpiCard class="h-100" delta="+8,2% · exemplo" label="Faturamento portfólio" value="R$ 28,4 mi" />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-blue)"
@@ -42,6 +43,7 @@
           value="4.982"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-green)"
@@ -51,6 +53,7 @@
           value="32,8%"
         />
       </v-col>
+
       <v-col cols="12" lg="3" sm="6">
         <KpiCard
           accent="var(--ip-gold)"
@@ -69,11 +72,14 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="m in marcas" :key="m.nome" class="hbar">
             <span class="hbar__label">{{ m.nome }}</span>
+
             <div class="hbar__track">
               <div class="hbar__fill" :style="{ width: `${m.pct}%`, background: m.color }" />
             </div>
+
             <StatusChip class="hbar__chip" :label="m.delta" tone="success" />
           </div>
         </SectionCard>
@@ -84,6 +90,7 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div v-for="c in curvaAbc" :key="c.letra" class="abc">
             <span class="abc__letter" :style="{ color: c.color }">{{ c.letra }}</span>
             <span class="abc__text">{{ c.texto }}</span>
@@ -99,6 +106,7 @@
           <template #actions>
             <StatusChip label="Dado de exemplo" tone="gold" />
           </template>
+
           <div class="table-wrap">
             <table class="prod">
               <thead>
@@ -111,6 +119,7 @@
                   <th>Ação</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="p in produtos" :key="p.produto">
                   <td class="prod__strong">{{ p.produto }}</td>

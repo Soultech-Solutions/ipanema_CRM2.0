@@ -74,7 +74,7 @@
     <template #activator="{ props: tipProps }">
       <div class="kpi-gauge" v-bind="tipProps">
         <div class="kpi-gauge__ring">
-          <svg class="kpi-gauge__svg" viewBox="0 0 140 120" aria-hidden="true">
+          <svg aria-hidden="true" class="kpi-gauge__svg" viewBox="0 0 140 120">
             <path
               class="kpi-gauge__track"
               d="M 20 100 A 54 54 0 1 1 120 100"
@@ -106,6 +106,7 @@
               >
                 {{ parts.prefix }}
               </span>
+
               <span class="kpi-gauge__value-text" :style="mainStyle">
                 {{ parts.main }}
               </span>

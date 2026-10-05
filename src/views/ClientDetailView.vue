@@ -58,6 +58,7 @@
           <h1 class="text-h4 font-weight-bold mb-1 brand-title">
             Cliente 360º • {{ store.current.nome }}
           </h1>
+
           <p class="text-body-2 text-medium-emphasis mb-0">
             Histórico comercial, margem, oportunidades e próximos passos.
           </p>
@@ -65,6 +66,7 @@
 
         <div class="d-flex ga-2">
           <v-btn color="secondary" rounded="lg" variant="outlined">Exportar</v-btn>
+
           <v-btn color="primary" rounded="lg" variant="flat" @click="router.push('/pipeline')">
             + Nova oportunidade
           </v-btn>
@@ -77,6 +79,7 @@
           <div class="text-subtitle-1 font-weight-bold text-uppercase mb-2">{{ store.current.nome }}</div>
           <div class="text-caption text-medium-emphasis">{{ store.current.documento }}</div>
           <div class="text-caption text-medium-emphasis mb-3">Vendedor: {{ store.current.vendedorNome }}</div>
+
           <v-chip :color="statusTone(store.current.status)" rounded="pill" size="small" variant="tonal">
             {{ statusLabel(store.current.status) }}
           </v-chip>
@@ -140,6 +143,7 @@
                   <th>Realizado</th>
                 </tr>
               </thead>
+
               <tbody>
                 <tr v-for="h in store.current.historicoFaturamento" :key="h.mes">
                   <td>{{ h.mes }}</td>
@@ -164,17 +168,23 @@
               <v-chip color="error" rounded="pill" size="small" variant="tonal">Margem</v-chip>
               <span class="text-body-2">Revisar desconto aplicado na última proposta.</span>
             </div>
+
             <v-divider />
+
             <div class="d-flex align-start ga-3 py-2">
               <v-chip color="default" rounded="pill" size="small" variant="tonal">Mix</v-chip>
               <span class="text-body-2">Cliente compra pouca variedade de linha vs. histórico.</span>
             </div>
+
             <v-divider />
+
             <div class="d-flex align-start ga-3 py-2">
               <v-chip color="default" rounded="pill" size="small" variant="tonal">Relacionamento</v-chip>
               <span class="text-body-2">{{ store.current.diasSemCompra }} dias sem pedido fechado.</span>
             </div>
+
             <v-divider />
+
             <div class="d-flex align-start ga-3 py-2">
               <v-chip color="info" rounded="pill" size="small" variant="tonal">Follow-up</v-chip>
               <span class="text-body-2">Ver recomendações pendentes na Central de follow-ups.</span>

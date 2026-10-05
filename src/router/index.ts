@@ -6,10 +6,12 @@ import { useAuthStore } from '@/stores/auth'
  * Ligue por rota à medida que a view for migrada (e remova o <h1> próprio da view).
  * meta.group: 'operations' → telas operacionais fora do Figma novo.
  */
-const placeholder = (title: string, icon: string, description: string) => ({
-  component: () => import('@/views/PlaceholderView.vue'),
-  props: { title, icon, description },
-})
+function placeholder (title: string, icon: string, description: string) {
+  return {
+    component: () => import('@/views/PlaceholderView.vue'),
+    props: { title, icon, description },
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,7 +55,7 @@ const router = createRouter({
         {
           path: 'vendedores',
           name: 'sellers',
-          component: () => import('@/views/VendedoresView.vue'), 
+          component: () => import('@/views/VendedoresView.vue'),
           meta: { title: 'Vendedores', subtitle: 'Performance, qualidade de carteira e oportunidades de evolução.', figmaHeader: true },
         },
         {
