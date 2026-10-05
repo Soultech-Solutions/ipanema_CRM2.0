@@ -269,3 +269,16 @@
 .bottom-nav { border-top: 1px solid var(--ip-border); }
 .bottom-nav :deep(.v-btn--active > .v-btn__overlay) { opacity: 0; }
 </style>
+<style>
+/* Mobile (Figma M01–M04): KPIs em 2 colunas e compactos — global de propósito */
+@media (max-width: 599.98px) {
+  .v-col-12.v-col-sm-6 {
+    flex: 0 0 50% !important;
+    max-width: 50% !important;
+  }
+  .kpi-card { padding: 14px !important; min-height: 100px !important; }
+  .kpi-card__value { font-size: 20px !important; }
+  .kpi-card__label { font-size: 11px !important; }
+  .kpi-card__delta { margin-top: 10px !important; }
+}
+</style>
