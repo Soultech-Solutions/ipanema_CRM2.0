@@ -274,7 +274,7 @@
 <!-- Estilo GLOBAL (sem scoped, de propósito): KPIs no celular, Figma M01–M04 -->
 <style>
 @media (max-width: 599.98px) {
-  .v-col-12.v-col-sm-6 {
+    .v-col:has(> .kpi-card) {
     flex: 0 0 50% !important;
     max-width: 50% !important;
   }
