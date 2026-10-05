@@ -9,15 +9,18 @@
         <div class="ip-card-title">{{ title }}</div>
         <div v-if="subtitle" class="ip-card-subtitle mt-1">{{ subtitle }}</div>
       </div>
-
       <slot name="actions" />
     </header>
-
     <slot />
   </v-card>
 </template>
 
 <style scoped>
 .section-card { padding: 24px; }
-.section-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+.section-card__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+
+@media (max-width: 599.98px) {
+  .section-card { padding: 16px; }
+  .section-card__head { margin-bottom: 14px; }
+}
 </style>
