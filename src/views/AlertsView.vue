@@ -1,25 +1,37 @@
 <script lang="ts" setup>
+  import type { ChipTone } from '@/components/StatusChip.vue'
   import type { Alert, AlertSeverity } from '@/types/commercial'
   import { computed, onMounted, ref } from 'vue'
   import { useRouter } from 'vue-router'
   import { fetchAlerts } from '@/api/directus'
-  import { formatDate, severityColor } from '@/utils/format'
+  import KpiCard from '@/components/KpiCard.vue'
+  import SectionCard from '@/components/SectionCard.vue'
+  import StatusChip from '@/components/StatusChip.vue'
+  import { formatDate } from '@/utils/format'
 
   const router = useRouter()
   const items = ref<Alert[]>([])
   const loading = ref(false)
   const onlyUnread = ref(false)
+  const selectedId = ref<string | null>(null)
 
-  const severityIcon: Record<AlertSeverity, string> = {
-    critical: 'mdi-alert-circle',
-    warning: 'mdi-alert',
-    info: 'mdi-information',
+  const severityInfo: Record<AlertSeverity, { label: string, tone: ChipTone }> = {
+    critical: { label: 'Crítico', tone: 'error' },
+    warning: { label: 'Atenção', tone: 'gold' },
+    info: { label: 'Informativo', tone: 'info' },
   }
 
   const filtered = computed(() => {
     if (!onlyUnread.value) return items.value
     return items.value.filter(a => !a.lido)
   })
+
+  const selected = computed(() =>
+    filtered.value.find(a => a.id === selectedId.value) ?? filtered.value[0] ?? null)
+
+  const criticos = computed(() => items.value.filter(a => a.severidade === 'critical').length)
+  const atencao = computed(() => items.value.filter(a => a.severidade === 'warning').length)
+  const informativos = computed(() => items.value.filter(a => a.severidade === 'info').length)
 
   onMounted(async () => {
     loading.value = true
@@ -37,96 +49,145 @@
 
 <template>
   <div>
-    <div class="d-flex flex-wrap align-center justify-space-between ga-3 mb-6">
-      <div>
-        <h1 class="text-h5 font-weight-bold mb-1">Alertas</h1>
+    <!-- KPIs -->
+    <v-row>
+      <v-col cols="12" lg="3" sm="6">
+        <KpiCard
+          accent="var(--ip-red)"
+          class="h-100"
+          label="Alertas críticos"
+          :value="String(criticos)"
+        />
+      </v-col>
+      <v-col cols="12" lg="3" sm="6">
+        <KpiCard
+          accent="var(--ip-gold)"
+          class="h-100"
+          label="Atenção"
+          :value="String(atencao)"
+        />
+      </v-col>
+      <v-col cols="12" lg="3" sm="6">
+        <KpiCard
+          accent="var(--ip-green)"
+          class="h-100"
+          label="Informativos"
+          :value="String(informativos)"
+        />
+      </v-col>
+      <v-col cols="12" lg="3" sm="6">
+        <KpiCard
+          accent="var(--ip-navy)"
+          class="h-100"
+          delta="+17% · exemplo"
+          delta-tone="gold"
+          label="Impacto potencial"
+          value="R$ 2,9 mi"
+        />
+      </v-col>
+    </v-row>
 
-        <p class="text-body-2 text-medium-emphasis mb-0">
-          Monitoramento automático de churn, queda de faturamento, Health Score e operação.
-        </p>
-      </div>
-
-      <v-switch
-        v-model="onlyUnread"
-        color="primary"
-        density="compact"
-        hide-details
-        label="Somente não lidos"
-      />
-    </div>
-
-    <v-list
-      v-if="!loading"
-      class="bg-transparent"
-      lines="three"
-    >
-      <v-card
-        v-for="alert in filtered"
-        :key="alert.id"
-        class="mb-3"
-        :color="alert.lido ? undefined : severityColor(alert.severidade)"
-        rounded="lg"
-        :variant="alert.lido ? 'outlined' : 'tonal'"
-      >
-        <v-list-item class="py-3">
-          <template #prepend>
-            <v-avatar
-              class="me-3"
-              :color="severityColor(alert.severidade)"
-              variant="flat"
-            >
-              <v-icon color="white">{{ severityIcon[alert.severidade] }}</v-icon>
-            </v-avatar>
+    <v-row>
+      <!-- Fila de alertas -->
+      <v-col cols="12" lg="6">
+        <SectionCard class="h-100" subtitle="Ordenado por impacto e urgência" title="Fila de alertas">
+          <template #actions>
+            <v-switch
+              v-model="onlyUnread"
+              color="primary"
+              density="compact"
+              hide-details
+              label="Somente não lidos"
+            />
           </template>
 
-          <v-list-item-title class="font-weight-bold text-wrap">
-            {{ alert.titulo }}
-          </v-list-item-title>
+          <v-skeleton-loader v-if="loading" type="list-item-two-line@4" />
 
-          <v-list-item-subtitle class="text-wrap mt-1">
-            {{ alert.descricao }}
-          </v-list-item-subtitle>
-
-          <template #append>
-            <div class="d-flex flex-column align-end ga-2">
-              <span class="text-caption text-medium-emphasis">
-                {{ formatDate(alert.createdAt) }}
-              </span>
-
-              <div class="d-flex ga-1">
-                <v-btn
-                  v-if="alert.clienteId"
-                  color="primary"
-                  size="small"
-                  variant="text"
-                  @click="router.push(`/clientes/${alert.clienteId}`)"
-                >
-                  Ver cliente
-                </v-btn>
-
-                <v-btn
-                  v-if="!alert.lido"
-                  size="small"
-                  variant="text"
-                  @click="markRead(alert)"
-                >
-                  Marcar lido
-                </v-btn>
+          <template v-else>
+            <div
+              v-for="alert in filtered"
+              :key="alert.id"
+              class="alert-row"
+              :class="{
+                'alert-row--active': selected?.id === alert.id,
+                'alert-row--read': alert.lido,
+              }"
+              @click="selectedId = alert.id"
+            >
+              <StatusChip
+                class="alert-row__chip"
+                :label="severityInfo[alert.severidade].label"
+                :tone="severityInfo[alert.severidade].tone"
+              />
+              <div class="alert-row__text">
+                <div class="alert-row__title">{{ alert.titulo }}</div>
+                <div class="alert-row__sub">{{ formatDate(alert.createdAt) }}</div>
               </div>
             </div>
+
+            <div v-if="!filtered.length" class="ip-card-subtitle">
+              Nenhum alerta {{ onlyUnread ? 'não lido' : '' }} no momento.
+            </div>
           </template>
-        </v-list-item>
-      </v-card>
+        </SectionCard>
+      </v-col>
 
-      <v-alert
-        v-if="filtered.length === 0"
-        type="success"
-        variant="tonal"
-      >
-        Nenhum alerta {{ onlyUnread ? 'não lido' : '' }} no momento.
-      </v-alert>
-    </v-list>
+      <!-- Detalhe do alerta -->
+      <v-col cols="12" lg="6">
+        <SectionCard class="h-100 detail-card" large title="Detalhe do alerta">
+          <template v-if="selected">
+            <div class="detail-headline">{{ selected.titulo }}</div>
 
-    <v-skeleton-loader v-else type="list-item-avatar-three-line@4" />
+            <div class="detail-label">Por que isso aconteceu?</div>
+            <p class="detail-text">{{ selected.descricao }}</p>
+
+            <div class="detail-label">Registrado em</div>
+            <p class="detail-text">{{ formatDate(selected.createdAt) }}</p>
+
+            <div class="detail-actions">
+              <v-btn
+                v-if="selected.clienteId"
+                class="detail-btn"
+                variant="flat"
+                @click="router.push(`/clientes/${selected.clienteId}`)"
+              >
+                Ver cliente
+              </v-btn>
+              <v-btn
+                v-if="!selected.lido"
+                class="detail-btn detail-btn--light"
+                variant="flat"
+                @click="markRead(selected)"
+              >
+                Marcar como lido
+              </v-btn>
+              <span v-else class="detail-read">Alerta lido</span>
+            </div>
+          </template>
+          <div v-else class="detail-text">Selecione um alerta para ver o detalhe.</div>
+        </SectionCard>
+      </v-col>
+    </v-row>
   </div>
 </template>
+
+<style scoped>
+.alert-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 10px; border-radius: 12px; background: var(--ip-bg); cursor: pointer; border: 1px solid transparent; }
+.alert-row:hover { background: var(--ip-tint-blue); }
+.alert-row--active { border-color: var(--ip-navy); }
+.alert-row--read { opacity: 0.6; }
+.alert-row__chip { min-width: 96px; justify-content: center; }
+.alert-row__text { min-width: 0; }
+.alert-row__title { font-size: 13px; font-weight: 600; color: var(--ip-text); }
+.alert-row__sub { margin-top: 2px; font-size: 11px; color: var(--ip-text-muted); }
+
+.detail-card { background: #102338 !important; border-color: #102338 !important; }
+.detail-card :deep(.ip-card-title) { color: var(--ip-gold); font-size: 12px; font-weight: 600; }
+.detail-headline { font-size: 26px; font-weight: 700; line-height: 1.25; color: #fff; margin-bottom: 24px; }
+.detail-label { font-size: 12px; font-weight: 600; color: var(--ip-gold); margin-bottom: 8px; }
+.detail-text { font-size: 13px; line-height: 1.6; color: rgba(255, 255, 255, 0.85); margin: 0 0 22px; }
+.detail-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 28px; }
+.detail-btn { background: #17324d !important; color: #fff !important; }
+.detail-btn--light { background: #fff !important; color: #17324d !important; }
+.detail-read { font-size: 12px; color: rgba(255, 255, 255, 0.6); }
+</style>
