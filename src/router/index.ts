@@ -91,7 +91,7 @@ const router = createRouter({
           path: 'analista',
           name: 'analyst',
           component: () => import('@/views/AnalystChatView.vue'),
-          meta: { title: 'Analista Comercial com IA', subtitle: 'Pergunte, entenda causas e transforme resposta em ação.' },
+          meta: { title: 'Analista Comercial com IA', subtitle: 'Pergunte, entenda causas e transforme resposta em ação.', figmaHeader: true },
         },
 
         // ── Operação (fora do Figma novo — decisão pendente) ─────────
