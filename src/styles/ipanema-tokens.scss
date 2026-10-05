@@ -60,3 +60,10 @@ body,
     max-width: 50%;
   }
 }
+/* Mobile: os KPIs ficam 2 por linha (Figma M01–M04) */
+@media (max-width: 599.98px) {
+  .v-col-12.v-col-sm-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
