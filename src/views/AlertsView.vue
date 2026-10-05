@@ -21,9 +21,11 @@
     info: { label: 'Informativo', tone: 'info' },
   }
 
+  const severityOrder: Record<AlertSeverity, number> = { critical: 0, warning: 1, info: 2 }
+
   const filtered = computed(() => {
-    if (!onlyUnread.value) return items.value
-    return items.value.filter(a => !a.lido)
+    const base = onlyUnread.value ? items.value.filter(a => !a.lido) : items.value
+    return [...base].sort((a, b) => severityOrder[a.severidade] - severityOrder[b.severidade])
   })
 
   const selected = computed(() =>
@@ -103,7 +105,7 @@
 
           <v-skeleton-loader v-if="loading" type="list-item-two-line@4" />
 
-          <template v-else>
+          <div v-else class="alert-list">
             <div
               v-for="alert in filtered"
               :key="alert.id"
@@ -128,7 +130,7 @@
             <div v-if="!filtered.length" class="ip-card-subtitle">
               Nenhum alerta {{ onlyUnread ? 'não lido' : '' }} no momento.
             </div>
-          </template>
+          </div>
         </SectionCard>
       </v-col>
 
@@ -172,6 +174,7 @@
 </template>
 
 <style scoped>
+.alert-list { max-height: 520px; overflow-y: auto; padding-right: 4px; }
 .alert-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 10px; border-radius: 12px; background: var(--ip-bg); cursor: pointer; border: 1px solid transparent; }
 .alert-row:hover { background: var(--ip-tint-blue); }
 .alert-row--active { border-color: var(--ip-navy); }
