@@ -85,7 +85,7 @@ const router = createRouter({
           path: 'alertas',
           name: 'alerts',
           component: () => import('@/views/AlertsView.vue'),
-          meta: { title: 'Central de Alertas', subtitle: 'Situações que exigem ação antes de virarem perda comercial.' },
+          meta: { title: 'Central de Alertas', subtitle: 'Situações que exigem ação antes de virarem perda comercial.', figmaHeader: true },
         },
         {
           path: 'analista',
