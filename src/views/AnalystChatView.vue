@@ -3,6 +3,7 @@
   import { marked } from 'marked'
   import { computed, nextTick, onMounted, ref, watch } from 'vue'
   import { useRouter } from 'vue-router'
+  import { useDisplay } from 'vuetify'
   import StatusChip from '@/components/StatusChip.vue'
   import { useAnalystStore } from '@/stores/analyst'
 
@@ -13,9 +14,19 @@
 
   const store = useAnalystStore()
   const router = useRouter()
+  const { xs } = useDisplay()
   const input = ref('')
   const listEl = ref<HTMLElement | null>(null)
   const endpointMode = import.meta.env.VITE_USE_MOCK === 'false' ? 'Directus' : 'Modo local'
+
+  const placeholder = computed(() =>
+    xs.value
+      ? 'Pergunte sobre vendas, margem, clientes…'
+      : 'Pergunte algo sobre a operação comercial…')
+
+  // Celular: só 2 perguntas rápidas (Figma M04)
+  const visibleSuggestions = computed(() =>
+    xs.value ? store.suggestions.slice(0, 2) : store.suggestions)
 
   // Última resposta da IA (alimenta o card "Fontes analisadas")
   const lastAnswer = computed(() =>
@@ -74,11 +85,10 @@
           density="comfortable"
           :disabled="!store.canSend"
           hide-details
-          placeholder="Pergunte algo sobre a operação comercial…"
+          :placeholder="placeholder"
           variant="plain"
           @keydown.enter.prevent="submit"
         />
-
         <v-btn
           class="ask__btn"
           :disabled="!input.trim() || !store.canSend"
@@ -91,17 +101,25 @@
       </v-card>
 
       <!-- Perguntas rápidas -->
-      <div class="quick-label">Perguntas rápidas</div>
-
+      <div class="quick-label d-none d-sm-block">Perguntas rápidas</div>
       <div class="quick">
         <button
-          v-for="s in store.suggestions"
+          v-for="s in visibleSuggestions"
           :key="s"
           class="quick__chip"
           type="button"
           @click="useSuggestion(s)"
         >
           {{ s }}
+        </button>
+        <!-- Celular: o card de fontes some, então "Nova conversa" vira atalho aqui -->
+        <button
+          v-if="xs"
+          class="quick__chip quick__chip--ghost"
+          type="button"
+          @click="store.clear()"
+        >
+          Nova conversa
         </button>
       </div>
 
@@ -146,8 +164,8 @@
       </div>
     </v-col>
 
-    <!-- Fontes analisadas -->
-    <v-col cols="12" lg="4">
+    <!-- Fontes analisadas (some no celular, como no Figma M04) -->
+    <v-col class="d-none d-sm-block" cols="12" lg="4">
       <v-card class="sources" rounded="xl" variant="flat">
         <div class="sources__title">Fontes analisadas</div>
 
@@ -161,12 +179,10 @@
             {{ src.label }}
           </div>
         </template>
-
         <p v-else class="sources__empty">As fontes usadas pela IA aparecem aqui depois da resposta.</p>
 
         <div class="sources__footer">
           <div class="sources__mode">Modo: {{ endpointMode }}</div>
-
           <v-btn
             class="sources__btn"
             prepend-icon="mdi-refresh"
@@ -191,6 +207,7 @@
 .quick { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
 .quick__chip { padding: 8px 16px; border-radius: 16px; background: var(--ip-tint-blue); color: var(--ip-navy); font-size: 12px; font-weight: 600; cursor: pointer; border: 0; text-align: left; }
 .quick__chip:hover { background: #dbe8f2; }
+.quick__chip--ghost { background: transparent; border: 1px solid var(--ip-border); color: var(--ip-text-muted); }
 
 .messages { display: flex; flex-direction: column; gap: 16px; max-height: 620px; overflow-y: auto; padding-right: 4px; }
 .msg { display: flex; }
@@ -242,4 +259,13 @@
 .sources__footer { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.15); }
 .sources__mode { margin-bottom: 12px; font-size: 11px; color: rgba(255, 255, 255, 0.6); }
 .sources__btn { background: var(--ip-navy) !important; color: #fff !important; }
+
+@media (max-width: 599.98px) {
+  .ask { padding: 6px 8px 6px 14px; }
+  .ask__input { font-size: 13px; }
+  .ask__btn { padding: 0 14px; font-size: 12px; }
+  .quick { margin: 14px 0 16px; gap: 8px; }
+  .quick__chip { padding: 7px 12px; font-size: 11px; }
+  .msg__answer { padding: 18px; }
+}
 </style>
